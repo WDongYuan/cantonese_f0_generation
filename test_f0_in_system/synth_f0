@@ -1,0 +1,17 @@
+#!/bin/sh
+
+fname=`basename $1 .f0`
+dname=`dirname $1`
+
+$ESTDIR/bin/ch_track ccoefs/$fname.mcep >x1.out
+paste $1 x1.out |
+awk '{for (i=2; i<26; i++)
+         printf("%s ",$i);
+      printf("\n");}' |
+$ESTDIR/bin/ch_track -itype ascii -otype est_binary -s 0.005 -o x1.mcep
+
+$ESTDIR/../festival/bin/festival -b '(begin
+   (wave.save (mlsa_resynthesis (track.load "x1.mcep") nil nil) "'$dname/$fname.wav'"))'
+
+
+     

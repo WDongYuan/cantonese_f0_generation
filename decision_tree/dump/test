@@ -1,0 +1,5 @@
+cat train_data_f0_vector | $ESTDIR/bin/ch_track -itype ascii -otype est_binary -s 0.005 -o something.mcep
+
+$ESTDIR/main/wagon_test -desc ../train_data/feature_desc -data ../sample_data/dev_file_sample -tree feats.tree -o test_predict -predict
+
+$ESTDIR/bin/wagon -data ../train_dev_data_vector/train_data/dct_0 -desc ../train_dev_data_vector/feature_desc -track ../train_dev_data_vector/something.mcep -stop 10 -output feats.tree

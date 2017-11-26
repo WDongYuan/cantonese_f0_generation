@@ -1,0 +1,1 @@
+normalize every sample in the train data, predict the value, unnormalize the prediction using mean and std in the test data.

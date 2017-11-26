@@ -1,0 +1,1 @@
+value of the dct conversion, normalize every column, predict, unnormalize using the global mena and std in train data.

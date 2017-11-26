@@ -1,0 +1,1 @@
+global normalize original f0 value, predict, unnormalize prediction using mean and std of specific test data

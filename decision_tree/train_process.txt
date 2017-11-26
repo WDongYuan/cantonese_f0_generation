@@ -1,0 +1,5 @@
+1. Collect data.
+2. Split data into train set and dev set.
+3. Normalize the data or not.
+4. Train data model.
+5. Print the prediction statistics.

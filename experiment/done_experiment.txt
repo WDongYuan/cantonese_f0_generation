@@ -1,0 +1,9 @@
+predict on seperate value or vector
+
+predict on dct or predict on original f0 value
+
+things to improve the accuracy:
+move up and down
+normalize every sample of f0 value, global normalize the f0 value
+normalize dct column or not
+predict the mean and standard deviation or use the global one of train data

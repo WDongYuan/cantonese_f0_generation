@@ -1,0 +1,10 @@
+Word.pos_in_phrase
+Word.words_out
+Word.content_words_in
+Word.content_words_out
+Syllable.pos_in_word
+Syllable.syl_in
+Syllable.syl_out
+Word.content_words_in
+Word.content_words_out
+Word.word_numsyls

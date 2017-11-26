@@ -1,0 +1,17 @@
+#!/bin/sh
+
+fname=`basename $1 .f0`
+dname=`dirname $1`
+ccoef_dir=$2
+out_dir=$3
+
+/Users/weidong/GoogleDrive/CMU/NLP/Can2Ch_Speech/my_festival/build/speech_tools/bin/ch_track $ccoef_dir/$fname.mcep >x1.out
+paste $1 x1.out |
+awk '{for (i=2; i<26; i++)
+         printf("%s ",$i);
+      printf("\n");}' |
+/Users/weidong/GoogleDrive/CMU/NLP/Can2Ch_Speech/my_festival/build/speech_tools/bin/ch_track -itype ascii -otype est_binary -s 0.005 -o x1.mcep
+
+/Users/weidong/GoogleDrive/CMU/NLP/Can2Ch_Speech/my_festival/build/speech_tools/../festival/bin/festival -b '(begin
+   (wave.save (mlsa_resynthesis (track.load "x1.mcep") nil nil) "'$out_dir/$fname.wav'"))'
+     

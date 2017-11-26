@@ -1,0 +1,46 @@
+==============================10/20/2017==============================
+Question:
+1. Do we need to normalize every 10 f0 values in one sample?
+2. Model the difference after subtracting the basic value for every kind of syllable?
+3. Are we going to improve this model or apply this model to Cantonese?
+4. The state of the art of this between English and Chinese is different?
+
+
+==============================10/23/2017==============================
+Question:
+1. Larger coefficient has larger correlation in the prediction result. Dose it mean that larger coefficient contains more important imformation?
+2. Is there anyway we can find some consistence between the f0 of same syllable? Like the inversed PCA, the dimention which catch the similar attibute of the f0 for the same syllable?
+3. How to use wagon_test to predict vector?
+
+Things to do:
+1. Read more paper about DCT f0 generation.
+2. Think about if it can be improve or not???
+3. Find the state of the art.
+
+=============================11/01/2017==============================
+Question:
+1.Where there are some sudden changes? How to model it?
+2.How to model the begining after the silence?
+3.Does the offset matter, or the shape?
+
+=============================11/02/2017==============================
+Measure: rmse, correlation
+1. Move up and down
+2. Denormalize using the test data (only mean, mean and variance)
+3. Combine 1 and 2.
+
+============================11/03/2017===============================
+4 hours every 
+
+============================11/04/2017===============================
+1. use the word with the same tone to unnormalize, use the word with the same syllable to unormalize
+2. normalize every sample first and then apply dct and then apply unnormalize using test data
+3. use hmm to predict the mean and variance for the test data?
+
+============================11/08/2017===============================
+What is correlation?
+Is there any way to classify the f0? Mean and variance? Syllable and tone??What is consistent even thought the context is changed?
+Whether to emphasize on the first dct coefficient?
+
+============================11/09/2017===============================
+feature: position/percentege of phrase two direction

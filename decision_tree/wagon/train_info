@@ -1,0 +1,41 @@
+mkdir: predict: File exists
+Dataset of 2956 vectors of 30 parameters from: ../sample_data/train/dct_0
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 189.0772 Correlation is 0.7587 Mean (abs) Error 144.7627 (121.6509)
+Dataset of 2956 vectors of 30 parameters from: ../sample_data/train/dct_1
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 97.2999 Correlation is 0.5994 Mean (abs) Error 72.4257 (64.9863)
+Dataset of 2956 vectors of 30 parameters from: ../sample_data/train/dct_2
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 62.0260 Correlation is 0.5763 Mean (abs) Error 44.5404 (43.1741)
+Dataset of 2956 vectors of 30 parameters from: ../sample_data/train/dct_3
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 45.2071 Correlation is 0.5542 Mean (abs) Error 29.8207 (33.9823)
+Dataset of 2956 vectors of 30 parameters from: ../sample_data/train/dct_4
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 37.0097 Correlation is 0.5349 Mean (abs) Error 22.8459 (29.1217)
+Dataset of 2956 vectors of 30 parameters from: ../sample_data/train/dct_5
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 31.4197 Correlation is 0.5258 Mean (abs) Error 18.1050 (25.6832)
+Dataset of 2956 vectors of 30 parameters from: ../sample_data/train/dct_6
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 24.5311 Correlation is 0.5423 Mean (abs) Error 13.8767 (20.2325)
+Dataset of 2956 vectors of 30 parameters from: ../sample_data/train/dct_7
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 19.1285 Correlation is 0.5304 Mean (abs) Error 10.7316 (15.8372)
+Dataset of 2956 vectors of 30 parameters from: ../sample_data/train/dct_8
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 13.3628 Correlation is 0.5364 Mean (abs) Error 7.8016 (10.8508)
+Dataset of 2956 vectors of 30 parameters from: ../sample_data/train/dct_9
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 9.4175 Correlation is 0.4950 Mean (abs) Error 5.9038 (7.3384)
+Processing dct_0
+Processing dct_1
+Processing dct_2
+Processing dct_3
+Processing dct_4
+Processing dct_5
+Processing dct_6
+Processing dct_7
+Processing dct_8
+Processing dct_9

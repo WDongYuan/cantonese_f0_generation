@@ -1,0 +1,30 @@
+Dataset of 2918 vectors of 30 parameters from: ../sample_data/train/dct_0
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 190.0167 Correlation is 0.7583 Mean (abs) Error 143.4748 (124.6060)
+Dataset of 2918 vectors of 30 parameters from: ../sample_data/train/dct_1
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 98.6254 Correlation is 0.5808 Mean (abs) Error 72.5861 (66.7815)
+Dataset of 2918 vectors of 30 parameters from: ../sample_data/train/dct_2
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 61.7290 Correlation is 0.5897 Mean (abs) Error 43.8851 (43.4191)
+Dataset of 2918 vectors of 30 parameters from: ../sample_data/train/dct_3
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 46.2518 Correlation is 0.5237 Mean (abs) Error 30.5833 (34.7031)
+Dataset of 2918 vectors of 30 parameters from: ../sample_data/train/dct_4
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 37.0922 Correlation is 0.5332 Mean (abs) Error 22.7585 (29.2946)
+Dataset of 2918 vectors of 30 parameters from: ../sample_data/train/dct_5
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 30.8930 Correlation is 0.5198 Mean (abs) Error 17.5759 (25.4104)
+Dataset of 2918 vectors of 30 parameters from: ../sample_data/train/dct_6
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 24.8089 Correlation is 0.5186 Mean (abs) Error 13.6830 (20.6979)
+Dataset of 2918 vectors of 30 parameters from: ../sample_data/train/dct_7
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 18.5546 Correlation is 0.5212 Mean (abs) Error 10.3588 (15.3964)
+Dataset of 2918 vectors of 30 parameters from: ../sample_data/train/dct_8
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 13.5444 Correlation is 0.5124 Mean (abs) Error 7.6583 (11.1733)
+Dataset of 2918 vectors of 30 parameters from: ../sample_data/train/dct_9
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 9.3350 Correlation is 0.5008 Mean (abs) Error 5.8375 (7.2858)

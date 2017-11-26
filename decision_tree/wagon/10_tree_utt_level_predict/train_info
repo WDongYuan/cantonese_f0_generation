@@ -1,0 +1,30 @@
+Dataset of 2903 vectors of 30 parameters from: ../train_dev_data/train_data/dct_0
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 186.4688 Correlation is 0.7594 Mean (abs) Error 141.8706 (121.0306)
+Dataset of 2903 vectors of 30 parameters from: ../train_dev_data/train_data/dct_1
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 85.9803 Correlation is 0.5943 Mean (abs) Error 63.2746 (58.2247)
+Dataset of 2903 vectors of 30 parameters from: ../train_dev_data/train_data/dct_2
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 48.5931 Correlation is 0.5948 Mean (abs) Error 35.7142 (32.9570)
+Dataset of 2903 vectors of 30 parameters from: ../train_dev_data/train_data/dct_3
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 30.4557 Correlation is 0.5360 Mean (abs) Error 21.4716 (21.6029)
+Dataset of 2903 vectors of 30 parameters from: ../train_dev_data/train_data/dct_4
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 20.1847 Correlation is 0.5115 Mean (abs) Error 13.9259 (14.6139)
+Dataset of 2903 vectors of 30 parameters from: ../train_dev_data/train_data/dct_5
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 13.9090 Correlation is 0.5125 Mean (abs) Error 9.3573 (10.2926)
+Dataset of 2903 vectors of 30 parameters from: ../train_dev_data/train_data/dct_6
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 9.3698 Correlation is 0.5178 Mean (abs) Error 6.1918 (7.0336)
+Dataset of 2903 vectors of 30 parameters from: ../train_dev_data/train_data/dct_7
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 6.9840 Correlation is 0.5025 Mean (abs) Error 4.4627 (5.3730)
+Dataset of 2903 vectors of 30 parameters from: ../train_dev_data/train_data/dct_8
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 5.1428 Correlation is 0.4927 Mean (abs) Error 3.1681 (4.0518)
+Dataset of 2903 vectors of 30 parameters from: ../train_dev_data/train_data/dct_9
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 3.7239 Correlation is 0.4658 Mean (abs) Error 2.2703 (2.9524)

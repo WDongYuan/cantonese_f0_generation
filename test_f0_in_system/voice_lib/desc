@@ -1,0 +1,84 @@
+#########################################
+1.
+normalize:
+norm_row -> dct -> norm_col
+
+predict dct coef
+
+unnormalize:
+unnorm_col -> idct -> unnorm_row(true mean,std)
+
+no slide
+#########################################
+2.
+normalize:
+norm_row -> dct -> norm_col
+
+predict dct coef
+
+unnormalize:
+unnorm_col -> idct -> unnorm_row(true mean,std)
+
+slide
+#########################################
+3.
+normalize:
+norm_row -> dct -> norm_col
+
+predict dct coef
+
+unnormalize:
+unnorm_col -> idct -> unnorm_global(train mean,std)
+
+no slide
+#########################################
+4.
+normalize:
+norm_row -> dct -> norm_col
+
+predict dct coef
+
+unnormalize:
+unnorm_col -> idct -> unnorm_global(train mean,std)
+
+slide
+#########################################
+5.
+normalize:
+norm_row -> dct -> norm_col
+
+predict dct coef, predict mean, std
+
+unnormalize:
+unnorm_col -> idct -> unnorm_global(predict mean,std)
+
+no slide
+#########################################
+6.
+normalize:
+norm_row -> dct -> norm_col
+
+predict dct coef, predict mean, std
+
+unnormalize:
+unnorm_col -> idct -> unnorm_global(predict mean,std)
+
+slide
+#########################################
+7.
+normalize:
+none
+
+unnormalize:
+none
+
+no slide
+#########################################
+8.
+normalize:
+none
+
+unnormalize:
+none
+
+slide

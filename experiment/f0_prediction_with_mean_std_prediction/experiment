@@ -1,0 +1,187 @@
+what feature should I suppose to know???
+for 6, it does use the new feature, but why the performance is not better????????
+should I try to redo the experiment since I use some new features????
+
+1.
+norm_row->dct->norm_col->predict->unnorm_col->idct->unnorm_row
+predict mean and std without column normalization
+RMSE:
+[ 11.77826677   6.15053416]
+Global RMSE:
+9.39565427572
+Column correlation:
+[ 0.58098877  0.09380444]
+Correlation mean:
+0.337396601362
+ABS ERROR:
+[ 8.91059014  4.31179001]
+
+RMSE:
+[ 17.22273564  17.2139684   15.8142385   14.3071463   13.29345267
+  13.04414382  12.97485542  13.55713751  14.24389642  16.32230343]
+Global RMSE:
+14.8863780113
+Column correlation:
+[ 0.36239554  0.35226022  0.41735622  0.50420354  0.56107934  0.59059929
+  0.60884413  0.58646353  0.55698478  0.52338043]
+Correlation mean:
+0.506356703253
+ABS ERROR:
+[ 12.81885277  12.39286609  11.54195225  10.88143857  10.12427018
+   9.68227011   9.69965936  10.25399814  10.92119326  12.01540742]
+
+
+2.
+norm_row->dct->norm_col->predict->unnorm_col->idct->unnorm_row
+predict mean and std with column normalization
+
+mean and std prediction:
+RMSE:
+[ 11.42180423   6.16979662]
+Global RMSE:
+9.17943359442
+Column correlation:
+[ 0.59745644  0.14158802]
+Correlation mean:
+0.369522231434
+ABS ERROR:
+[ 8.50632418  4.25959867]
+
+f0 prediction:
+RMSE:
+[ 16.84922161  16.90839894  15.69530727  14.16782873  12.97075232
+  12.63766847  12.61879902  13.28442849  13.96898974  16.07741054]
+Global RMSE:
+14.6086867228
+Column correlation:
+[ 0.39065958  0.37173869  0.41705715  0.5036746   0.5735303   0.60946315
+  0.62522667  0.59839249  0.57078294  0.53581328]
+Correlation mean:
+0.519633883912
+ABS ERROR:
+[ 12.29722254  11.94876548  11.29198538  10.52571679   9.66237415
+   9.19164049   9.26659793   9.8933157   10.60841648  11.66302907]
+
+3.
+using new feature: 
+R:SylStructure.parent.R:Word.content_words_in
+R:SylStructure.parent.R:Word.content_words_out
+R:SylStructure.parent.R:Word.pos_in_phrase
+R:SylStructure.parent.R:Word.words_out
+
+perdict on mean and std
+RMSE:
+[ 11.81172107   6.13974311]
+Global RMSE:
+9.41310788565
+Column correlation:
+[ 0.57500882  0.09540474]
+Correlation mean:
+0.335206777497
+ABS ERROR:
+[ 8.92130107  4.33303665]
+
+f0 prediction:
+RMSE:
+[ 17.36667221  17.32472724  15.8625239   14.28289744  13.24182035
+  12.99274275  12.9355027   13.54803193  14.25205515  16.36915461]
+Global RMSE:
+14.911311712
+Column correlation:
+[ 0.34812446  0.34012789  0.41014347  0.50197898  0.56098479  0.59083228
+  0.60823657  0.58389692  0.55363503  0.51801193]
+Correlation mean:
+0.501597230738
+ABS ERROR:
+[ 12.81119466  12.378611    11.59361585  10.84150489  10.04510464
+   9.58334235   9.6053026   10.21814081  10.89285557  11.96185804]
+
+
+4.
+norm_row->dct->norm_col->predict->unnorm_col->idct->unnorm_row
+adding last f0 and next f0 value, prediction for mean and std
+
+RMSE:
+[ 8.43845687  5.00078287]
+Global RMSE:
+6.93597086614
+Column correlation:
+[ 0.80584364  0.5398709 ]
+Correlation mean:
+0.672857267239
+ABS ERROR:
+[ 5.98141587  3.29950959]
+
+RMSE:
+[ 13.70876161  13.74368965  13.01145932  12.48894154  11.862944
+  11.24014502  10.59131906  10.77335388  11.07680051  12.76163857]
+Global RMSE:
+12.1776734511
+Column correlation:
+[ 0.6530319   0.64383018  0.65039849  0.65533423  0.67516105  0.7148131
+  0.75632186  0.75855484  0.7558898   0.73743564]
+Correlation mean:
+0.70007710989
+ABS ERROR:
+[ 9.08779833  8.93581388  9.0359162   9.04128091  8.73430225  8.1508884
+  7.68412606  7.82975473  8.02802741  8.39251979]
+
+5.
+use last_f0 last_mean last_std to predict mean and std for sample
+RMSE:
+[ 10.5879353    5.34403938]
+Global RMSE:
+8.38639167912
+Column correlation:
+[ 0.67637706  0.43795329]
+Correlation mean:
+0.5571651734
+ABS ERROR:
+[ 7.94881588  3.67862769]
+
+f0 prediction:
+RMSE:
+[ 13.12353825  13.43166432  13.23234315  13.22395953  12.98458893
+  13.01010534  13.05250803  13.79735337  14.55166462  16.54649192]
+Global RMSE:
+13.7358637441
+Column correlation:
+[ 0.68188744  0.6560769   0.62711525  0.5963558   0.59168781  0.59713727
+  0.60559681  0.57216318  0.53919023  0.51152089]
+Correlation mean:
+0.597873157148
+ABS ERROR:
+[  8.82154333   8.9181315    9.4621169    9.8209155    9.66355253
+   9.62575468   9.71054147  10.35345371  11.06076792  12.28257879]
+
+6.
+use new feature in_pos,out_pos,in_percent
+
+prediction on mean and std
+RMSE:
+[ 11.60298313   6.23109166]
+Global RMSE:
+9.31277941635
+Column correlation:
+[ 0.59566307  0.11036031]
+Correlation mean:
+0.35301169188
+ABS ERROR:
+[ 8.8561992   4.32975376]
+
+RMSE:
+[ 17.089537    17.07975601  15.72104056  14.26668912  13.20624702
+  12.88006692  12.83752587  13.45356707  14.15048528  16.01848042]
+Global RMSE:
+14.7559799568
+Column correlation:
+[ 0.3736804   0.36404189  0.4237936   0.50766665  0.5675038   0.60257965
+  0.62146868  0.59866653  0.56903985  0.5469979 ]
+Correlation mean:
+0.517543894172
+ABS ERROR:
+[ 12.85660692  12.40359082  11.72471783  10.90878834  10.03274791
+   9.60630098   9.65540562  10.29792984  10.98671022  12.00376558]
+
+
+ab test

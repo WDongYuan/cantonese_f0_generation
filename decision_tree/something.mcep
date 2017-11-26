@@ -1,0 +1,10 @@
+EST_File Track
+DataType binary
+ByteOrder 01
+NumFrames 0
+NumChannels 0
+EqualSpace 1
+BreaksPresent true
+CommentChar ;
+
+EST_Header_End

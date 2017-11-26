@@ -1,0 +1,9 @@
+export FESTVOXDIR=/Users/weidong/GoogleDrive/CMU/NLP/Can2Ch_Speech/my_festival/build/festvox
+export ESTDIR=/Users/weidong/GoogleDrive/CMU/NLP/Can2Ch_Speech/my_festival/build/speech_tools
+export SPTKDIR=/Users/weidong/GoogleDrive/CMU/NLP/Can2Ch_Speech/my_festival/build/SPTK
+
+
+
+$ESTDIR/../festival/examples/dumpfeats -relation Segment -eval festvox/cmu_yue_wdy_clunits.scm -feats festival/dur/etc/dur.feats -output festival/dur/feats/%s.feats -eval festival/dur/etc/logdurn.scm -from_file my_file_list
+
+$ESTDIR/../festival/examples/dumpfeats -feats accent.feats -relation Syllable -output accent.data -from_file my_file_list

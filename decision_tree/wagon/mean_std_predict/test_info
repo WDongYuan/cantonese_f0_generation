@@ -1,0 +1,3 @@
+Dataset of 2979 vectors of 34 parameters from: ../train_dev_data_vector/train_data/dct_0
+wagon: -omp_nthreads ignored: not support in this build.
+RMSE 7.9388 Correlation is 0.9903 Mean (abs) Error 5.5488 (5.6781)
