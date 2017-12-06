@@ -266,6 +266,7 @@ if __name__=="__main__":
 		# print("python read_data.py sample_train_dev_data ./train_data 0.8 ./sample_data")
 		print("python read_data.py create_train_dev_data 0.8(ratio for train data)")
 		print("python read_data.py create_train_dev_data_vector 0.8(ratio for train data)")
+		print("python read_data.py create_train_dev_data_vector_with_dev_set ./dev_file")
 		print("")
 		print("2. Modify the description file in ./train_data")
 		exit()
@@ -404,7 +405,59 @@ if __name__=="__main__":
 	if mode=="normalize_test":
 		NormalizeFile("./dump/dct_0",[0],"./dump/normalize_file")
 
+	if mode=="create_train_dev_data_vector_with_dev_set":
+		print("running...")
+		dev_list = sys.argv[2]
+		os.system("rm -r train_dev_data_vector")
+		os.system("mkdir train_dev_data_vector")
+		read_dir = "./feature_f0_data"
 
+		##Select some utt file as train file and dev file
+		file_list = [file_name for file_name in os.listdir(read_dir) if "data" in file_name]
+		# random.shuffle(file_list)
+		# train_file_list = file_list[0:int(len(file_list)*train_ratio)]
+		# dev_file_list = file_list[int(len(file_list)*train_ratio):len(file_list)]
+		dev_file_list = []
+		with open(dev_list) as f:
+			for line in f:
+				dev_file_list.append(line.strip())
+		train_file_list = [file_name for file_name in file_list if file_name not in dev_file_list]
+		os.system("mkdir train_dev_data_vector/train_file_buffer")
+		os.system("mkdir train_dev_data_vector/dev_file_buffer")
+
+		##Copy train utt file into a buffer folder
+		for tmp_train_file in train_file_list:
+			os.system("cp "+read_dir+"/"+tmp_train_file+" train_dev_data_vector/train_file_buffer")
+		##Copy dev utt file into a buffer folder
+		for tmp_dev_file in dev_file_list:
+			os.system("cp "+read_dir+"/"+tmp_dev_file+" train_dev_data_vector/dev_file_buffer")
+
+		word_with_tone = False
+		##Create the train data
+		train_dir = "./train_dev_data_vector/train_data"
+		feature_file = "./feature_list"
+		os.system("mkdir "+train_dir)
+		CreateTrainDataVector("train_dev_data_vector/train_file_buffer",train_dir,"train_dev_data_vector/train_data_f0_vector",feature_file,word_with_tone)
+
+		##Create the dev data
+		dev_dir = "./train_dev_data_vector/dev_data"
+		feature_file = "./feature_list"
+		os.system("mkdir "+dev_dir)
+		CreateTrainDataVector("train_dev_data_vector/dev_file_buffer",dev_dir,"train_dev_data_vector/dev_data_f0_vector",feature_file,word_with_tone)
+
+
+		os.system("rm -r train_dev_data_vector/train_file_buffer")
+		os.system("rm -r train_dev_data_vector/dev_file_buffer")
+
+		# NormalizeFile("train_dev_data_vector/train_data_f0_vector",range(10),"train_dev_data_vector/train_data_f0_vector_norm")
+		# NormalizeFile("train_dev_data_vector/dev_data_f0_vector",range(10),"train_dev_data_vector/dev_data_f0_vector_norm")
+
+		##Create the feature description file for the train data feature
+		desc_file = "./train_dev_data_vector/feature_desc"
+		my_desc_file = "./my_feature_desc"
+		feature_file = "./feature_list"
+		predict_vector = True
+		CreateFeatureDesc(train_dir,feature_file,desc_file,my_desc_file,predict_vector)
 
 
 
