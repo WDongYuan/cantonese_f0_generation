@@ -1,5 +1,7 @@
+import matplotlib
+matplotlib.use('TkAgg')
 import sys
-sys.path.append("/Users/weidong/GoogleDrive/CMU/NLP/Can2Ch_Speech/my_festival/gen_audio/src/")
+# sys.path.append("/Users/weidong/GoogleDrive/CMU/NLP/Can2Ch_Speech/my_festival/gen_audio/src/")
 import my_tool
 import numpy as np
 import matplotlib.pyplot as plt
@@ -58,7 +60,7 @@ def FileSyllableSegment(phoneme_file_path,syllable_list):
 		syl_timeline.append([syl,[begin_time,end_time]])
 		begin_time = ph_timeline[ph_i][1][0]
 		ph_str = ""
-
+	# print(syl_timeline)
 	return syl_timeline
 
 def GenerateF0TimeLine(phoneme_file,syllable_file,true_f0_file,out_file):
@@ -68,8 +70,11 @@ def GenerateF0TimeLine(phoneme_file,syllable_file,true_f0_file,out_file):
 			arr = line.strip().split(" ")
 			syl_f0.append([arr[0],np.array(arr[1:len(arr)]).astype(np.float)])
 	syl_timeline = FileSyllableSegment(phoneme_file,[sample[0] for sample in syl_f0])
+	# print(syl_timeline)
 	timeline = np.zeros((60000,))
 
+	# if "01021" in syllable_file:
+	# 	print(syl_f0)
 	for i in range(len(syl_f0)):
 		assert syl_f0[i][0]==syl_timeline[i][0]
 		syl_begin = syl_timeline[i][1][0]
@@ -102,6 +107,12 @@ if __name__=="__main__":
 	parser.add_argument('--file1', dest='file1')
 	parser.add_argument('--file2', dest='file2')
 
+	parser.add_argument('--dir1', dest='dir1')
+	parser.add_argument('--dir2', dest='dir2')
+	parser.add_argument('--wav_dir1', dest='wav_dir1')
+	parser.add_argument('--wav_dir2', dest='wav_dir2')
+	parser.add_argument('--data_name',dest='data_name')
+
 
 	args = parser.parse_args()
 	mode = args.mode
@@ -109,6 +120,7 @@ if __name__=="__main__":
 	if mode=="how_to_run":
 		print("python generate_f0_timeline.py"+
 			" --mode generate_f0_timeline"+
+			" --true_f0_dir ./f0_value"+
 			" --predict_dir ../decision_tree/wagon/predict_f0_in_file"+
 			" --out_dir ./predict_vs_true_contour"+
 			" --file_suffix .f0")
@@ -128,11 +140,21 @@ if __name__=="__main__":
 			" --mode plot_two_file"+
 			" --file1 ./predicted_f0_dir/f0_val/data_00013.f0"+
 			" --file2 ./predicted_f0_dir/slide_concat/data_00013.f0")
+		print("python generate_f0_timeline.py"+
+			" --mode plot_two_file_with_syllable"+
+			" --true_f0_dir ./f0_value"+
+			" --predict_dir ../decision_tree/wagon/predict_f0_in_file"+
+			" --dir1 ../test_f0_in_system/voice_lib/0/f0_val"+
+			" --dir2 ../test_f0_in_system/voice_lib/1/f0_val"+
+			" --wav_dir1 ../test_f0_in_system/voice_lib/0/wav"+
+			" --wav_dir2 ../test_f0_in_system/voice_lib/1/wav"+
+			" --data_name data_00013")
 
 	if mode=="generate_f0_timeline":
 		predict_file_f0_dir = args.predict_dir
 		out_dir = args.out_dir
 		file_suffix = args.file_suffix
+		true_f0_dir = args.true_f0_dir
 		# data_name = "data_00013"
 		data_name_list = [data_name for data_name in os.listdir(predict_file_f0_dir) if "data" in data_name]
 		# syl_data = my_tool.TxtDoneData("../../txt.done.data")
@@ -142,9 +164,9 @@ if __name__=="__main__":
 		os.system("mkdir "+out_dir)
 		os.system("mkdir "+out_dir+"/f0_val")
 		for data_name in data_name_list:
-			print(data_name)
-			phoneme_file = "./f0_value/"+data_name+".phoneme"
-			true_f0_file = "./f0_value/"+data_name+".f0"
+			# print(data_name)
+			phoneme_file = true_f0_dir+"/"+data_name+".phoneme"
+			true_f0_file = true_f0_dir+"/"+data_name+".f0"
 			syllable_file = predict_file_f0_dir+"/"+data_name
 			out_file = out_dir+"/f0_val/"+data_name+file_suffix
 			# print(out_file)
@@ -233,7 +255,7 @@ if __name__=="__main__":
 		os.system("mkdir "+out_dir)
 		os.system("mkdir "+out_dir+"/f0_val")
 		for data_name in [data_name for data_name in os.listdir(predict_dir) if "data" in data_name]:
-			print(data_name)
+			# print(data_name)
 			f0_val = np.loadtxt(predict_dir+"/"+data_name,delimiter=",")
 			# print(f0_val[1000:1020])
 			###################################################################
@@ -266,10 +288,61 @@ if __name__=="__main__":
 		file2 = args.file2
 		arr1 = np.loadtxt(file1,delimiter=",")
 		arr2 = np.loadtxt(file2,delimiter=",")
-		plt.scatter(range(len(arr1)),arr1,label="file1",s=1)
-		plt.scatter(range(len(arr2)),arr2,label="file2",s=1)
+		plt.scatter(np.arange(len(arr1))*5,arr1,label="file1",s=1)
+		plt.scatter(np.arange(len(arr2))*5,arr2,label="file2",s=1)
 		plt.legend()
 		plt.show()
+
+	# if mode == "plot_two_file_with_syllable":
+	# 	dir1 = args.dir1
+	# 	dir2 = args.dir2
+	# 	wav_dir1 = args.wav_dir1
+	# 	wav_dir2 = args.wav_dir2
+
+	# 	data_name = args.data_name
+	# 	true_f0_dir = args.true_f0_dir
+	# 	predict_file_f0_dir = args.predict_dir
+
+	# 	phoneme_file = true_f0_dir+"/"+data_name+".phoneme"
+	# 	true_f0_file = true_f0_dir+"/"+data_name+".f0"
+	# 	syllable_file = predict_file_f0_dir+"/"+data_name
+		
+	# 	syl_f0 = []
+	# 	with open(syllable_file) as f:
+	# 		for line in f:
+	# 			arr = line.strip().split(" ")
+	# 			syl_f0.append([arr[0],np.array(arr[1:len(arr)]).astype(np.float)])
+	# 	syl_timeline = FileSyllableSegment(phoneme_file,[sample[0] for sample in syl_f0])
+	# 	# print(syl_timeline)
+
+	# 	fig, ax = plt.subplots()
+
+	# 	file1 = dir1+"/"+data_name+".f0"
+	# 	file2 = dir2+"/"+data_name+".f0"
+	# 	arr1 = np.loadtxt(file1,delimiter=",")
+	# 	arr2 = np.loadtxt(file2,delimiter=",")
+	# 	ax.scatter(np.arange(len(arr1))*5,arr1,label="file1",s=0.2)
+	# 	ax.scatter(np.arange(len(arr2))*5,arr2,label="file2",s=0.2)
+
+	# 	y = np.ones((len(syl_timeline),))*50
+	# 	for i in range(len(y)):
+	# 		y[i] += 10*(-1)**i
+
+	# 	ax.scatter([tup[1][1] for tup in syl_timeline],y)
+	# 	for i, tup in enumerate(syl_timeline):
+	# 		ax.annotate(tup[0],(tup[1][1],y[i]),FontSize=5, rotation=45)
+	# 		ax.axvline(x=tup[1][1],linestyle='-',linewidth=0.5, color='b')
+	# 	plt.legend()
+	# 	plt.savefig("./"+data_name+".jpg",dpi=200)
+	# 	os.system("open "+data_name+".jpg")
+
+	# 	my_input = "y"
+	# 	while my_input=="y":
+	# 		os.system("play "+wav_dir1+"/"+data_name+".wav")
+	# 		os.system("play "+wav_dir2+"/"+data_name+".wav")
+	# 		my_input = raw_input("reply? (y/n)")
+			
+
 
 
 

@@ -34,15 +34,14 @@ def LoadFileSyllableFeature(dir):
 				datafile_feats_dic[tmp_filename].append([arr[0],arr])
 	return datafile_feats_dic
 
-def SaveDataFeature(datafile_f0_dic,datafile_feats_dic,feature_file):
+def SaveDataFeature(datafile_f0_dic,datafile_feats_dic):
 	os.system("mkdir feature_f0_data")
-	# os.system("cp ../dumpfeats/my_feature ./feature_f0_data/feature_list")
-	os.system("cp "+feature_file+" ./feature_f0_data/feature_list")
+	os.system("cp ../dumpfeats/my_feature ./feature_f0_data/feature_list")
 	for filename,f0_list in datafile_f0_dic.items():
 		feats_list = datafile_feats_dic[filename]
 		with open("feature_f0_data/"+filename,"w+") as f:
 			for i in range(len(f0_list)):
-				assert f0_list[i][0] == feats_list[i][0],f0_list[i][0]+" "+feats_list[i][0]
+				assert f0_list[i][0]==feats_list[i][0],f0_list[i][0]+" "+feats_list[i][0]
 				f.write("feature:"+",".join(feats_list[i][1])+"\n")
 				f.write("f0:"+",".join([str(num) for num in f0_list[i][1]])+"\n")
 
@@ -129,12 +128,11 @@ def CreateTrainDataVector(read_dir,train_dir,f0_vector_file,feature_file,word_wi
 
 def CreateFeatureDesc(train_dir,feature_file,desc_file,my_desc_file,predict_vector):
 	known_feature = {}
-	if os.path.isfile(my_desc_file):
-		with open(my_desc_file) as f:
-			for line in f:
-				line = line.strip()
-				arr = line.split(" ")
-				known_feature[arr[0]] = " ".join(arr[1:len(arr)])
+	with open(my_desc_file) as f:
+		for line in f:
+			line = line.strip()
+			arr = line.split(" ")
+			known_feature[arr[0]] = " ".join(arr[1:len(arr)])
 
 	desc_token = open(desc_file,"w+")
 	if predict_vector:
@@ -263,7 +261,7 @@ def NormalizeFile(infile,col,outfile):
 if __name__=="__main__":
 	if len(sys.argv)==1:
 		print("1. Collect dct coef data and feature data from specific directory.")
-		print("python read_data.py collect_data ../DCT/subsample_f0.save ../dumpfeats/my_feature ../dumpfeats/data_feature")
+		print("python read_data.py collect_data dct/syllable")
 		# print("python read_data.py create_train_data")
 		# print("python read_data.py sample_train_dev_data ./train_data 0.8 ./sample_data")
 		print("python read_data.py create_train_dev_data 0.8(ratio for train data)")
@@ -275,16 +273,16 @@ if __name__=="__main__":
 
 	mode = sys.argv[1]
 	if mode=="collect_data":
-		f0_file = sys.argv[2]
-		feature_file = sys.argv[3]
-		feature_dir = sys.argv[4]
+		data_type = sys.argv[2]
 		##Collect data from ../DCT and ../dumpfeats, save to ./features_f0_data
 		datafile_f0_dic = None
-		datafile_f0_dic = LoadSyllableF0List(f0_file)
-		# datafile_feats_dic = LoadFileSyllableFeature("../dumpfeats/data_feature")
-		datafile_feats_dic = LoadFileSyllableFeature(feature_dir)
-		os.system("cp "+feature_file+" feature_list")
-		SaveDataFeature(datafile_f0_dic,datafile_feats_dic,feature_file)
+		if data_type=="dct":
+			datafile_f0_dic = LoadSyllableF0List("../DCT/syllable_f0_dct_representation.save")
+		elif data_type=="syllable":
+			datafile_f0_dic = LoadSyllableF0List("../DCT/subsample_f0.save")
+		datafile_feats_dic = LoadFileSyllableFeature("../dumpfeats/data_feature")
+		os.system("cp ../dumpfeats/my_feature feature_list")
+		SaveDataFeature(datafile_f0_dic,datafile_feats_dic)
 
 	if mode=="create_train_dev_data_vector":
 		train_ratio = float(sys.argv[2])
@@ -460,7 +458,6 @@ if __name__=="__main__":
 		feature_file = "./feature_list"
 		predict_vector = True
 		CreateFeatureDesc(train_dir,feature_file,desc_file,my_desc_file,predict_vector)
-
 
 
 

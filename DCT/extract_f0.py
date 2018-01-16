@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('TkAgg')
 import sys
 import os
 import matplotlib.pyplot as plt
@@ -5,7 +7,8 @@ import matplotlib.pyplot as plt
 def ExtractF0():
 	os.system("mkdir f0_value")
 	os.system("export ESTDIR=/Users/weidong/GoogleDrive/CMU/NLP/Can2Ch_Speech/my_festival/build/speech_tools")
-	f0_path = "../cmu_yue_wdy_normal_build/f0"
+	# f0_path = "../cmu_yue_wdy_normal_build/f0"
+	f0_path = "../../jyutping_correction/cmu_yue_wdy_correction/f0"
 	estdir = "/Users/weidong/GoogleDrive/CMU/NLP/Can2Ch_Speech/my_festival/build/speech_tools"
 
 	file_list = os.listdir(f0_path)

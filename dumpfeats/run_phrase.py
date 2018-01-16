@@ -17,5 +17,5 @@ if __name__=="__main__":
 	# print("export SPTKDIR=/Users/weidong/GoogleDrive/CMU/NLP/Can2Ch_Speech/my_festival/build/SPTK")
 	ESTDIR="/Users/weidong/GoogleDrive/CMU/NLP/Can2Ch_Speech/my_festival/build/speech_tools"
 	os.system(ESTDIR+"/../festival/examples/dumpfeats -feats "+feature_file+
-		" -relation Syllable -output "+save_dir+"/%s.feats -from_file "+file_list+
+		" -relation Segment -output "+save_dir+"/%s.feats -from_file "+file_list+
 		" -eval "+voice_dir+"/festvox/clustergen.scm")
