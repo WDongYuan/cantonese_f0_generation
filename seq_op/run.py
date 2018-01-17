@@ -440,6 +440,7 @@ if __name__=="__main__":
 			print("")
 			print(">>>>>>>>>> test statistics <<<<<<<<<<")
 			test_statistics(predict_f0,dev_label,out_dir)
+			os.system("cat "+out_dir+"/"+"test_statistics")
 		elif op["test_stat"] == 0:
 			# print(">>>>>>>>>> no test statistics <<<<<<<<<<")
 			pass

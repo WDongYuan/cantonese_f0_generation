@@ -65,7 +65,7 @@ def NormalizeFileRow(infile,outfile,record_file):
 	std = np.std(data,axis=1)+0.001
 	mean = np.mean(data,axis=1)
 	norm_data = (data-mean.reshape((-1,1)))/std.reshape((-1,1))
-	np.savetxt(outfile,norm_data,delimiter=" ",fmt="%.10f")
+	np.savetxt(outfile,norm_data,delimiter=" ",fmt="%.5f")
 	record = np.vstack((mean,std))
 	np.savetxt(record_file,record,delimiter=" ")
 
@@ -76,14 +76,14 @@ def UnNormalizeFileRow(infile,outfile,record_file):
 	std = record[1]
 	# print(std.shape)
 	unnorm_data = np.multiply(data,std.reshape((-1,1)))+mean.reshape((-1,1))
-	np.savetxt(outfile,unnorm_data,delimiter=" ",fmt="%.10f")
+	np.savetxt(outfile,unnorm_data,delimiter=" ",fmt="%.5f")
 
 def NormalizeFileGlobal(infile,outfile,record_file):
 	data = np.loadtxt(infile,delimiter=" ")
 	std = np.std(data)+0.001
 	mean = np.mean(data)
 	norm_data = (data-mean)/std
-	np.savetxt(outfile,norm_data,delimiter=" ",fmt="%.10f")
+	np.savetxt(outfile,norm_data,delimiter=" ",fmt="%.5f")
 	np.savetxt(record_file,np.array([mean,std]),delimiter=" ")
 
 def UnNormalizeFileGlobal(infile,outfile,record_file):
@@ -93,7 +93,7 @@ def UnNormalizeFileGlobal(infile,outfile,record_file):
 	std = record[1]
 	# print(std.shape)
 	unnorm_data = data*std+mean
-	np.savetxt(outfile,unnorm_data,delimiter=" ",fmt="%.10f")
+	np.savetxt(outfile,unnorm_data,delimiter=" ",fmt="%.5f")
 
 	
 
@@ -344,14 +344,14 @@ if __name__=="__main__":
 		in_file = args.in_file
 		out_file = args.out_file
 		m = np.loadtxt(in_file,delimiter=" ")
-		np.savetxt(out_file,m.T,delimiter=" ")
+		np.savetxt(out_file,m.T,delimiter=" ",fmt="%.5f")
 	elif mode=="row_mean_std":
 		in_file = args.in_file
 		record_file = args.record_file
 		data = np.loadtxt(in_file,delimiter=" ")
 		mean = data.mean(axis=1)
 		std = data.std(axis=1)
-		np.savetxt(record_file,np.hstack((mean.reshape((-1,1)),std.reshape((-1,1)))),delimiter=" ",fmt="%.10f")
+		np.savetxt(record_file,np.hstack((mean.reshape((-1,1)),std.reshape((-1,1)))),delimiter=" ",fmt="%.5f")
 	elif mode=="split_f0":
 		feat_file = args.feat_file
 		f0_file = args.f0_file

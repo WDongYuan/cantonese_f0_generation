@@ -237,7 +237,7 @@ if __name__=="__main__":
 			" -desc "+desc_file+
 			# " -test ./dump/dev_data/dct_0"+
 			" -track ./dump/train_track_file"+
-			" -stop 10"+
+			" -stop 15"+
 			" -output "+out_dir+"/"+train_file_name+"_tree"+
 			"> "+out_dir+"/"+train_file_name+"_test_info")
 
