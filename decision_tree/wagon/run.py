@@ -43,6 +43,9 @@ if __name__=="__main__":
 	parser.add_argument('--map_file', dest='map_file')
 	parser.add_argument('--in_dir', dest='in_dir')
 	parser.add_argument('--out_file', dest='out_file')
+	parser.add_argument('--tree_file', dest='tree_file')
+	parser.add_argument('--first_syllable_flag', dest='first_syllable_flag',type=int,default=1)
+	parser.add_argument('--stop_size', dest='stop_size',type=int,default=30)
 
 
 	args = parser.parse_args()
@@ -70,6 +73,14 @@ if __name__=="__main__":
 			" --train_label ../train_dev_data_vector/train_data_f0_vector"+
 			" --test_file ../train_dev_data_vector/dev_data/dct_0"+
 			" --test_label ../train_dev_data_vector/dev_data_f0_vector"+
+			" --stop_size(optional default is 30) 30"
+			" --out_dir ./vector_predict")
+		print("#################################################################")
+		print("python run.py --mode predict_vector"+
+			" --desc_file ../train_dev_data_vector/feature_desc"+
+			" --test_file ../train_dev_data_vector/dev_data/dct_0"+
+			" --test_label ../train_dev_data_vector/dev_data_f0_vector"+
+			" --tree_file "+
 			" --out_dir ./vector_predict")
 		print("#################################################################")
 		print("python run.py --mode train_predict_mean_std"+
@@ -92,6 +103,7 @@ if __name__=="__main__":
 		print("python run.py --mode put_back_f0_in_file"+
 			" --f0_file_map ../train_dev_data_vector/dev_data/syllable_map"+
 			" --f0_val ./vector_predict/dct_0_val_unnorm"+
+			" --first_syllable_flag(optional, default is 1) 1"
 			" --out_dir ./predict_f0_in_file")
 		print("#################################################################")
 		print("python run.py --mode update_feature_using_map"+
@@ -218,6 +230,7 @@ if __name__=="__main__":
 		train_label_file = args.train_label
 		dev_file = args.test_file
 		dev_label_file = args.test_label
+		stop_size = args.stop_size
 		out_dir = args.out_dir
 		os.system("mkdir "+out_dir)
 
@@ -237,7 +250,9 @@ if __name__=="__main__":
 			" -desc "+desc_file+
 			# " -test ./dump/dev_data/dct_0"+
 			" -track ./dump/train_track_file"+
-			" -stop 15"+
+			" -stop "+str(stop_size)+
+			" -heap 60000000"
+			# " -heap 100000000"+
 			" -output "+out_dir+"/"+train_file_name+"_tree"+
 			"> "+out_dir+"/"+train_file_name+"_test_info")
 
@@ -266,6 +281,51 @@ if __name__=="__main__":
 				f.write(" ".join(sample)+"\n")
 
 		os.system("rm -r dump")
+
+
+	if mode=="predict_vector":
+		os.system("mkdir dump")
+
+		desc_file = args.desc_file
+		dev_file = args.test_file
+		dev_label_file = args.test_label
+		tree_file = args.tree_file
+		out_dir = args.out_dir
+		os.system("mkdir "+out_dir)
+
+		ESTDIR = "/Users/weidong/GoogleDrive/CMU/NLP/Can2Ch_Speech/my_festival/build/speech_tools"
+
+		##Conver the file into track file
+		print("Converting track file for train data and test data...")
+		os.system("cat "+dev_label_file+" | "+ESTDIR+"/bin/ch_track -itype ascii -otype est_binary -s 0.005 -o ./dump/dev_track_file")
+
+		print("Predicting on the dev set...")
+		dev_file_name = dev_file.split("/")[-1]
+		os.system(ESTDIR+"/main/wagon_test"+
+				" -desc "+desc_file+
+				" -data "+dev_file+
+				" -tree "+tree_file+
+				" -track ./dump/dev_track_file"+
+				" -o "+out_dir+"/"+dev_file_name+
+				" -predict")
+
+		##Transcript the Festival format into the readable format
+		predict_val = []
+		with open(out_dir+"/"+dev_file_name) as f:
+			for line in f:
+				line = line.strip()
+				arr = re.split(r"\(|\)|\s",line)
+				arr = [tmp_s for tmp_s in arr if tmp_s!=""]
+				arr.pop(-1)
+				arr = [arr[i] for i in range(len(arr)) if i%2==0]
+				predict_val.append(arr)
+		with open(out_dir+"/"+dev_file_name+"_val","w+") as f:
+			for sample in predict_val:
+				f.write(" ".join(sample)+"\n")
+
+		os.system("rm -r dump")
+
+
 
 	if mode=="plot_f0":
 		# true_dir = sys.argv[2]
@@ -362,6 +422,7 @@ if __name__=="__main__":
 		f0_file_map = args.f0_file_map
 		f0_val = args.f0_val
 		out_dir = args.out_dir
+		first_syllable_flag = args.first_syllable_flag
 		os.system("rm -r "+out_dir)
 		os.system("mkdir "+out_dir)
 		cur_file = None
@@ -379,7 +440,10 @@ if __name__=="__main__":
 						cur_file = file_name
 						token.close()
 						token = open(out_dir+"/"+file_name,"w+")
-					token.write(syl+" "+val_line+"\n")
+					if first_syllable_flag==1:
+						token.write(syl+" "+val_line+"\n")
+					else:
+						token.write(val_line+"\n")
 					map_line = fmap.readline().strip()
 					val_line = fval.readline().strip()
 				token.close()

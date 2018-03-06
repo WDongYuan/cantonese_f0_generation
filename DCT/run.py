@@ -208,7 +208,8 @@ def AlignF0Phoneme(data_name,f0_dir):
 	phoneme_list = []
 
 	##Align the f0 value and the phoneme
-	phoneme_file = "./f0_value/"+data_name+".phoneme"
+	# phoneme_file = "./f0_value/"+data_name+".phoneme"
+	phoneme_file = f0_dir+"/"+data_name+".phoneme"
 	with open(phoneme_file) as f:
 		for line in f:
 			line = line.strip()
@@ -361,6 +362,10 @@ if __name__=="__main__":
 			" --mode put_f0_in_file"+
 			" --subsample_file ./subsample_f0.save"+
 			" --out_dir ./f0_in_file")
+		print("6. python run.py"+
+			" --mode put_syllable_in_file"+
+			" --txt_done_data "+
+			" --out_dir ./syllable_in_file")
 		print("##########################################################################")
 		print("Additional function:")
 		print("python run.py --mode plot_file_f0/plot_syllable_f0 --data_name data_00002(data_name)")
@@ -368,6 +373,7 @@ if __name__=="__main__":
 		print("python run.py --mode tone_experiment")
 		print("python run.py --mode text_syllable_f0_experiment")
 		print("python run.py --mode extract_phrase --f0_dir ./f0_value --out_dir ./phrase_dir --consonant_vowel_file ./consonant_vowel")
+		print("python run.py --mode extract_can_phrase --f0_dir ./f0_value --out_dir ./phrase_dir --consonant_vowel_file ./consonant_vowel --txt_done_data")
 		print("python run.py --mode phrase_f0_dct"+
 			" --subsample_file ./subsample_f0.save"+
 			" --phrase_dir ./phrase_dir/phrase_syllable"+
@@ -766,6 +772,55 @@ if __name__=="__main__":
 							cat_phrase.append(phrase[idx]+phrase[idx+1])
 							idx += 2
 					outf.write(" ".join(cat_phrase)+"\n")
+
+	elif mode=="extract_can_phrase":
+		f0_dir = args.f0_dir
+		out_dir = args.out_dir
+		consonant_vowel_file = args.consonant_vowel_file
+		txt_done_data = args.txt_done_data
+		data_dic = ReadTxtDoneData(txt_done_data)
+		# print(data_dic)
+
+		# cons_dic = {}
+		# vowel_dic = {}
+		# with open(consonant_vowel_file) as f:
+		# 	cons_l = f.readline().strip().split(" ")
+		# 	for cons in cons_l:
+		# 		cons_dic[cons] = True
+		# 	vowel_l = f.readline().strip().split(" ")
+		# 	for vowel in vowel_l:
+		# 		vowel_dic[vowel] = True
+
+		os.system("mkdir "+out_dir)
+		file_list = os.listdir(f0_dir)
+		file_list = [file_name for file_name in file_list if "phoneme" in file_name]
+		for file in file_list:
+			with open(f0_dir+"/"+file) as inf, open(out_dir+"/"+file.split(".")[0],"w+") as outf:
+				lines = inf.readlines()
+				ph_l = [line.strip().split(" ")[1] for line in lines]
+				phrase_l = [[]]
+				for ph in ph_l:
+					if ph=="pau" or ph=="ssil":
+						phrase_l.append([])
+					else:
+						phrase_l[-1].append(ph)
+				phrase_l = [phrase for phrase in phrase_l if len(phrase)!=0]
+				data_syl = data_dic[file.split(".")[0]]
+				syl_idx = 0
+				for phrase in phrase_l:
+					cat_phrase = []
+					idx = 0
+					while idx < len(phrase):
+						if phrase[idx] == data_syl[syl_idx][0]:
+							cat_phrase.append(phrase[idx])
+							idx += 1
+							syl_idx += 1
+						else:
+							cat_phrase.append(phrase[idx]+phrase[idx+1])
+							syl_idx += 1
+							idx += 2
+					outf.write(" ".join(cat_phrase)+"\n")
+
 	elif mode=="phrase_f0_dct":
 		phrase_dir = args.phrase_dir
 		subsample_file = args.subsample_file
@@ -784,6 +839,8 @@ if __name__=="__main__":
 		file_list = os.listdir(phrase_dir)
 		file_list = [file for file in file_list if "data" in file]
 		for phr_file in file_list:
+			if phr_file not in data_f0:
+				continue
 			with open(phrase_dir+"/"+phr_file) as phr_f, open(out_dir+"/f0/"+phr_file,"w+") as out_f,open(out_dir+"/dct/"+phr_file,"w+") as dct_f:
 				idx = 0
 				file_f0 = data_f0[phr_file]
@@ -792,10 +849,17 @@ if __name__=="__main__":
 						line = line.strip().split(" ")
 						tmp_f0_l = []
 						for i in range(len(line)):
+							# print(phr_file)
 							# print(line[i]+" "+file_f0[idx+i][0])
-							assert line[i]==file_f0[idx+i][0]
+							# assert line[i]==file_f0[idx+i][0]##do not check for cantonese data but for mandarine data
 							tmp_f0_l += file_f0[idx+i][1]
-						tmp_f0_l = np.array(tmp_f0_l)
+						tmp_f0_l = np.array(tmp_f0_l).reshape((-1,10))
+
+						## get the syllable mean for phrase
+						tmp_f0_l_mean = tmp_f0_l.reshape((-1,10)).mean(axis=1).reshape((-1,1))
+						tmp_f0_l = 0*tmp_f0_l+tmp_f0_l_mean
+						tmp_f0_l = tmp_f0_l.flatten()
+
 						dct_vec = dct(tmp_f0_l)
 						dct_vec[num:] = 0
 						idct_vec = (idct(dct_vec)/(len(tmp_f0_l)*2)).reshape((-1,10))
@@ -841,6 +905,19 @@ if __name__=="__main__":
 		plt.plot(phrase_level_f0,label="phrase_level_f0")
 		plt.legend()
 		plt.show()
+
+	elif mode=="put_syllable_in_file":
+		txt_done_data = args.txt_done_data
+		out_dir = args.out_dir
+		os.system("mkdir "+out_dir)
+
+		data_syl_dic = ReadTxtDoneData(txt_done_data)
+		for data_name,syl_l in data_syl_dic.items():
+			with open(out_dir+"/"+data_name,"w+") as f:
+				for syl in syl_l:
+					f.write(syl[0]+syl[1]+"\n")
+
+
 
 
 

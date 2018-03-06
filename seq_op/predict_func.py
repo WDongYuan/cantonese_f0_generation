@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from scipy.fftpack import idct, dct
+from rf import RandomForest
 def predict_multiple_vector(train_data,train_label,dev_data,dev_label,out_dir,decompose_desc,vector_feat_desc,val_feat_desc,log=""):
 	dct_flag = False
 	individual_flag = False
@@ -79,7 +80,7 @@ def predict_one_value(train_file,dev_file,out_dir,feat_desc="../decision_tree/fe
 	out_file = out_dir+"/"+dev_name
 	return out_file
 
-def predict_vector(train_data,train_label,dev_data,dev_label,out_dir,feat_desc="../decision_tree/feature_desc_dir/feature_desc_vector",log=""):
+def predict_vector(train_data,train_label,dev_data,dev_label,out_dir,feat_desc="../decision_tree/feature_desc_dir/feature_desc_vector",log="",stop_size=30):
 	dev_name = dev_data.split("/")[-1]
 	os.system("python ../decision_tree/wagon/run.py"+
 		" --mode train_predict_vector"+
@@ -88,6 +89,7 @@ def predict_vector(train_data,train_label,dev_data,dev_label,out_dir,feat_desc="
 		" --train_label "+train_label+
 		" --test_file "+dev_data+
 		" --test_label "+dev_label+
+		" --stop_size "+str(stop_size)+
 		" --out_dir "+out_dir+
 		log)
 	out_file = out_dir+"/"+dev_name+"_val"
@@ -127,7 +129,9 @@ def predict_each_f0_value(train_data,train_label,dev_data,dev_label,out_dir,feat
 	os.system("rm -r "+dev_dir)
 	return out_file
 
-def predict_tone_specific(train_data,train_label,train_map_file,dev_data,dev_label,dev_map_file,out_dir,feat_desc,vector_prediction=True):
+def predict_tone_specific(train_data,train_label,train_map_file,dev_data,dev_label,dev_map_file,
+	out_dir,feat_desc,vector_prediction=True,tone_num = 5,rf_param=None,stop_size=20):
+	#rf_param=[tree_num,label_ratio,feat_ratio]
 	os.system("mkdir "+out_dir+"/tone_dev")
 	os.system("mkdir "+out_dir+"/tone_train")
 	os.system("mkdir "+out_dir+"/tone_predict")
@@ -149,18 +153,26 @@ def predict_tone_specific(train_data,train_label,train_map_file,dev_data,dev_lab
 		" --out_dir "+out_dir+"/tone_dev")
 	log_file = out_dir+"/prediction_log"
 	os.system("rm "+log_file)
-	for tone in range(1,7):
+	for tone in range(1,1+tone_num):
 		print("")
-		print("predicting on tone "+str(tone))
+		print(">>>>>>>>>> predicting on tone "+str(tone))
 		tone_train_data = out_dir+"/tone_train/feat_tone_"+str(tone)
 		tone_train_label = out_dir+"/tone_train/f0_tone_"+str(tone)
 		tone_dev_data = out_dir+"/tone_dev/feat_tone_"+str(tone)
 		tone_dev_label = out_dir+"/tone_dev/f0_tone_"+str(tone)
 		tone_predict = None
-		if vector_prediction:
-			tone_predict = predict_vector(tone_train_data,tone_train_label,tone_dev_data,tone_dev_label,out_dir+"/tone_predict",feat_desc,log=" >> "+log_file)
+		if rf_param is not None:
+			os.system("mkdir "+out_dir+"/tone_predict/rf_tone"+str(tone))
+			tone_rf = RandomForest(rf_param[0],rf_param[1],rf_param[2],
+				tone_train_label,tone_train_data,tone_dev_label,tone_dev_data,
+				feat_desc,out_dir+"/tone_predict/rf_tone"+str(tone),stop_size=stop_size)
+			tone_predict = tone_rf.train()
+		elif vector_prediction:
+			tone_predict = predict_vector(tone_train_data,tone_train_label,tone_dev_data,tone_dev_label,
+				out_dir+"/tone_predict",feat_desc,log=" >> "+log_file,stop_size=stop_size)
 		else:
-			tone_predict = predict_each_f0_value(tone_train_data,tone_train_label,tone_dev_data,tone_dev_label,out_dir+"/tone_predict",feat_desc,log=" >> "+log_file)
+			tone_predict = predict_each_f0_value(tone_train_data,tone_train_label,tone_dev_data,tone_dev_label,
+				out_dir+"/tone_predict",feat_desc,log=" >> "+log_file)
 		os.system("rm "+out_dir+"/tone_dev/f0_tone_"+str(tone))
 		os.system("mv "+tone_predict+" "+out_dir+"/tone_dev/f0_tone_"+str(tone))
 	os.system("python ../decision_tree/wagon/data_processing.py"+

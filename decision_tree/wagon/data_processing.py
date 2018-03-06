@@ -158,6 +158,21 @@ def CombineToneSpecificData(in_dir,record_file,out_dir):
 			f0_file_list[tone].close()
 			map_file_list[tone].close()
 
+def timeline_rmse(true_f0,predict_f0):
+	tf = []
+	pf = []
+	for i in range(len(true_f0)):
+		if true_f0[i]>0:
+			tf.append(true_f0[i])
+			pf.append(predict_f0[i])
+	tf = np.array(tf)
+	pf = np.array(pf)
+	# print(tf)
+	# print(pf)
+	cor = np.corrcoef(tf,pf)[0][1]
+	rmse = np.sqrt(np.square(tf-pf).mean())
+	return rmse,cor
+
 
 if __name__=="__main__":
 	parser = argparse.ArgumentParser()
@@ -178,6 +193,11 @@ if __name__=="__main__":
 	parser.add_argument('--in_dir', dest='in_dir')
 	parser.add_argument('--file_name', dest='file_name')
 	parser.add_argument('--feature_index', dest='feature_index',type=int)
+	parser.add_argument('--number', dest='number',type=int,default=-1)
+
+	parser.add_argument('--true_f0_dir', dest='true_f0_dir')
+	parser.add_argument('--predict_f0_dir', dest='predict_f0_dir')
+
 
 	args = parser.parse_args()
 
@@ -192,7 +212,8 @@ if __name__=="__main__":
 		print("python data_processing.py"+
 			" --mode dct_row/idct_row/transpose_file"+
 			" --in_file"+
-			" --out_file")
+			" --out_file"+
+			" --number(optional)")
 		print("python data_processing.py"+
 			" --mode normalize_row/unnormalize_row/unnormalize_col/normalize_global/unnormalize_global"+
 			" --in_file"+
@@ -240,6 +261,10 @@ if __name__=="__main__":
 		print("python data_processing.py"+
 			" --mode naive_mean_test"+
 			" --in_file f0_file")
+		print("python data_processing.py"+
+			" --mode timeline_predict_statistics"+
+			" --true_f0_dir ./f0_value"+
+			" --predict_f0_dir ./f0_timeline/f0_val")
 
 	elif mode=="combine_file_column":
 		my_dir = args.dir
@@ -265,16 +290,27 @@ if __name__=="__main__":
 	elif mode=="dct_row":
 		in_file = args.in_file
 		out_file = args.out_file
+		number = args.number
 		data = np.loadtxt(in_file,delimiter=" ")
 		data = dct(data,axis=1)
-		np.savetxt(out_file,data,delimiter=" ",fmt="%.10f")
+		if number==-1:
+			np.savetxt(out_file,data,delimiter=" ",fmt="%.5f")
+		else:
+			np.savetxt(out_file,data[:,0:number],delimiter=" ",fmt="%.5f")
 
 	elif mode=="idct_row":
 		in_file = args.in_file
 		out_file = args.out_file
+		number = args.number
 		data = np.loadtxt(in_file,delimiter=" ")
-		data = idct(data,axis=1)/(2*data.shape[1])
-		np.savetxt(out_file,data,delimiter=" ",fmt="%.10f")
+		if number==-1:
+			data = idct(data,axis=1)/(2*data.shape[1])
+		else:
+			tmp_arr = np.zeros((len(data),number))
+			tmp_arr[:,0:data.shape[1]] = data
+			data = tmp_arr
+			data = idct(data,axis=1)/(2*data.shape[1])
+		np.savetxt(out_file,data,delimiter=" ",fmt="%.5f")
 
 	elif mode=="file_statistic":
 		file1 = args.file1
@@ -422,6 +458,38 @@ if __name__=="__main__":
 		f0 = np.loadtxt(f0_file,delimiter=" ")
 		with open(map_file) as mf:
 			map_cont = [line.strip() for line in mf.readlines()]
+
+	elif mode=="timeline_predict_statistics":
+		true_f0_dir = args.true_f0_dir
+		predict_f0_dir = args.predict_f0_dir
+		predict_list = os.listdir(predict_f0_dir)
+		cor_list = []
+		rmse_list = []
+		for filename in predict_list:
+			predict_f0_file = predict_f0_dir+"/"+filename
+			true_f0_file = true_f0_dir+"/"+filename
+			true_f0 = []
+			with open(true_f0_file) as f:
+				for line in f:
+					tup = line.split(" ")
+					if tup[0]=="":
+						true_f0.append(float(tup[1]))
+					else:
+						true_f0.append(float(tup[0]))
+			true_f0 = np.array(true_f0)
+			predict_f0 = np.loadtxt(predict_f0_file,delimiter=" ")
+			true_f0 = true_f0[0:len(predict_f0)]
+			assert len(true_f0)==len(predict_f0)
+			rmse,cor = timeline_rmse(true_f0,predict_f0)
+			cor_list.append(cor)
+			rmse_list.append(rmse)
+			# exit()
+		print("statistics for f0 timeline:")
+		# print(rmse_list)
+		print("rmse: "+str(np.array(rmse_list).mean()))
+		print("correlation: "+str(np.array(cor_list).mean()))
+		
+
 
 
 	else:

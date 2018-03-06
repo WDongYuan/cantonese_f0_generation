@@ -136,6 +136,19 @@ def PosInPhrase(idx,syl_list):
 	out_pos = end-idx
 	return in_pos,out_pos,in_percent
 
+def read_syllable_f0_list(file):
+	dic = {}
+	pre_data_name = ""
+	with open(file) as f:
+		for line in f:
+			line = line.strip().split(",")
+			data_name = "_".join(line[0].split("_")[0:2])
+			if data_name not in dic:
+				dic[data_name] = []
+			dic[data_name].append(line[1:])
+	return dic
+
+
 
 if __name__=="__main__":
 
@@ -150,6 +163,7 @@ if __name__=="__main__":
 	parser.add_argument('--phrase_dir', dest='phrase_dir')
 	parser.add_argument('--feat_dir', dest='feat_dir')
 	parser.add_argument('--feat_desc', dest='feat_desc')
+	parser.add_argument('--syllable_f0_list', dest='syllable_f0_list')
 	parser.add_argument('--remove_tone_from_word_idx', dest='word_idx',type=int, default=-1)
 	args = parser.parse_args()
 	mode = args.mode
@@ -157,6 +171,7 @@ if __name__=="__main__":
 		print("######################################################")
 		print("python feature_processing.py --mode extract_feature"+
 			" --f0_dir ../DCT/f0_value"+
+			" --syllable_f0_list syllable_f0_list.save"+
 			" --txt_done_data ../../txt.done.data"+
 			" --out_dir ./extract_feature")
 		print("######################################################")
@@ -180,7 +195,7 @@ if __name__=="__main__":
 	if mode=="extract_feature":
 		# selected_feature = ["last_f0","next_f0","last_mean","next_mean","last_std","next_std"]
 		# selected_feature = ["last_f0","last_mean","last_std"]
-		selected_feature = ["in_pos","out_pos","in_percent","tone"]
+		selected_feature = ["in_pos","out_pos","in_percent","tone","duration"]
 
 		txt_done_data = args.txt_done_data
 		f0_dir = args.f0_dir
@@ -216,8 +231,7 @@ if __name__=="__main__":
 			########################################################################################
 			syllable_f0_list.append(tmp_syllable_f0_list)
 		############################################################################################
-		# print(syllable_f0_list[0])
-		# exit()
+		
 
 		##This is the list to record the collected features in order
 		feature_in_order = [True]
@@ -296,6 +310,10 @@ if __name__=="__main__":
 						if feature_in_order[0]:
 							feature_in_order.append("tone")
 						one_syl_feature.append(syl_l[i][0][-1])
+					if "duration" in selected_feature:
+						if feature_in_order[0]:
+							feature_in_order.append("duration")
+						one_syl_feature.append(str(len(syl_l[i][1])))
 
 
 					feature_list.append(one_syl_feature)
@@ -316,7 +334,13 @@ if __name__=="__main__":
 		file_list_2 = [file_name for file_name in os.listdir(in_dir_2) if "data" in file_name]
 		os.system("mkdir "+out_dir)
 
-		assert len(file_list_1)==len(file_list_2)
+		if len(file_list_1)!=len(file_list_2):
+			print("Some files are missing. Use the shorter file list.")
+			if len(file_list_1)>len(file_list_2):
+				file_list_1 = [file_name for file_name in file_list_2]
+			else:
+				file_list_2 = [file_name for file_name in file_list_1]
+
 
 		file_list_1 = sorted(file_list_1)
 		file_list_2 = sorted(file_list_2)
@@ -329,7 +353,7 @@ if __name__=="__main__":
 				for l1,l2 in zip(f1,f2):
 					l1 = l1.strip().split(" ")
 					l2 = l2.strip().split(" ")
-					assert l1[0].split("_")[-1]==l2[0].split("_")[-1]
+					# assert l1[0].split("_")[-1]==l2[0].split("_")[-1]
 					if word_idx!=-1:
 						l1[word_idx] = l1[word_idx][0:-1]
 					l1 += l2[1:len(l2)]
@@ -365,10 +389,11 @@ if __name__=="__main__":
 		with open(feat_desc) as f:
 			for line in f:
 				feat_name_list.append(line.strip())
+		feat_file_list = os.listdir(feat_dir)
 		file_list = os.listdir(phrase_dir)
 		file_list = [file for file in file_list if "data" in file]
 		extract_feature = ["pre_num_word","num_word","next_num_word","utt_num_phrase","utt_num_word","phrase_pos","phrase_pos_ratio",
-		"first_pos","last_pos","first_tone","last_tone","pre_tone","next_tone"]
+		"first_pos","last_pos","first_tone","last_tone","pre_tone","next_tone","duration"]
 		print("extracted features:")
 		print("\n".join(extract_feature))
 		with open(out_dir+"/0_phrase_feature","w+") as f:
@@ -376,7 +401,9 @@ if __name__=="__main__":
 
 		for file in file_list:
 			utt = None
-			with open(phrase_dir+"/"+file) as phf, open(feat_dir+"/"+file+".feats") as featf, open(out_dir+"/"+file,"w+") as outf:
+			if file+".feats" not in feat_file_list:
+				continue
+			with open(phrase_dir+"/"+file) as phf, open(feat_dir+"/"+file+".feats") as featf, open(out_dir+"/"+file+".feats","w+") as outf:
 				phrase_list = []
 				for line in phf:
 					line = line.strip().split(" ")
@@ -438,6 +465,9 @@ if __name__=="__main__":
 						feat_val_list.append(0)
 					else:
 						feat_val_list.append(utt.phrase_list[i+1].word_list[0].get_feat("tone"))
+
+					#duration
+					feat_val_list.append(sum([int(tmp_word.get_feat("duration")) for tmp_word in utt.phrase_list[i].word_list]))
 
 					outf.write(" ".join([str(feat_val) for feat_val in feat_val_list])+"\n")
 

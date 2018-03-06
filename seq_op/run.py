@@ -2,6 +2,16 @@ import os
 import argparse
 import numpy as np
 from predict_func import *
+from rf import RandomForest
+import warnings
+warnings.filterwarnings('error')
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 def read_operation(path):
 	op = {}
@@ -13,8 +23,10 @@ def read_operation(path):
 			line = line.split(" ")
 			op_name = line[0]
 			op_val = None
-			if line[1]=="0" or line[1]=="1":
-				op_val = True if line[1]=="1" else False
+			# if line[1]=="0" or line[1]=="1":
+			# 	op_val = True if line[1]=="1" else False
+			if is_number(line[1]):
+				op_val = float(line[1])
 			else:
 				op_val = line[1]
 			op[op_name] = op_val
@@ -41,13 +53,14 @@ def norm_global(in_file,out_dir):
 		" --record_file "+norm_record)
 	return out_file,norm_record
 
-def dct_row(in_file,out_dir):
+def dct_row(in_file,out_dir,number):
 	file_name = in_file.split("/")[-1]
 	out_file = out_dir+"/"+file_name+"_dct"
 	os.system("python ../decision_tree/wagon/data_processing.py"+
 		" --mode dct_row"+
 		" --in_file "+in_file+
-		" --out_file "+out_file)
+		" --out_file "+out_file+
+		" --number "+str(number))
 	return out_file
 
 def norm_col(in_file,out_dir,col_num=10):
@@ -63,14 +76,32 @@ def norm_col(in_file,out_dir,col_num=10):
 		" --col_list "+col_list)
 	return out_file,norm_record
 
-def idct_row(in_file,out_dir):
+def idct_row(in_file,out_dir,number):
 	file_name = in_file.split("/")[-1]
 	out_file = out_dir+"/"+file_name+"_idct"
 	os.system("python ../decision_tree/wagon/data_processing.py"+
 		" --mode idct_row"+
 		" --in_file "+in_file+
-		" --out_file "+out_file)
+		" --out_file "+out_file+
+		" --number "+str(number))
 	return out_file
+
+def log_row(in_file,out_dir):
+	file_name = in_file.split("/")[-1]
+	out_file = out_dir+"/"+file_name+"_log"
+	arr = np.loadtxt(in_file,delimiter=" ")
+	arr = np.log(arr)
+	np.savetxt(out_file,arr,delimiter=" ",fmt="%.5f")
+	return out_file
+
+def exp_row(in_file,out_dir):
+	file_name = in_file.split("/")[-1]
+	out_file = out_dir+"/"+file_name+"_exp"
+	arr = np.loadtxt(in_file,delimiter=" ")
+	arr = np.exp(arr)
+	np.savetxt(out_file,arr,delimiter=" ",fmt="%.5f")
+	return out_file
+
 
 def unnorm_col(in_file,record_file,out_dir):
 	file_name = in_file.split("/")[-1]
@@ -127,13 +158,14 @@ def test_statistics(predict_file,true_file,out_dir):
 		" > "+out_dir+"/"+"test_statistics")
 	print("saving test statistics to "+out_dir+"/"+"test_statistics")
 
-def put_predict_f0_in_file(in_file,syllable_map,out_dir):
+def put_predict_f0_in_file(in_file,syllable_map,out_dir,first_syllable_flag=1):
 	out_file = out_dir+"/predict_f0_in_file"
 	os.system("mkdir "+out_file)
 	os.system("python ../decision_tree/wagon/run.py"+
 		" --mode put_back_f0_in_file"+
 		" --f0_file_map "+syllable_map+
 		" --f0_val "+in_file+
+		" --first_syllable_flag "+str(first_syllable_flag)+
 		" --out_dir "+out_file)
 	print("saving result to "+out_file)
 	return out_file
@@ -199,6 +231,232 @@ def unpadding(in_file,pad_num,out_dir):
 	np.savetxt(out_file,data[:,0:pad_num],delimiter=" ")
 	return out_file
 
+# def get_f0_delta(in_file,out_dir,delta_rate):
+# 	file_name = in_file.split("/")[-1]
+# 	out_file = out_dir+"/"+file_name+"_delta"
+# 	delta_num = 9
+# 	arr = np.loadtxt(in_file)
+# 	row,col = arr.shape
+# 	delta = arr[:,1:col]-arr[:,0:col-1]
+# 	np.savetxt(out_file,np.hstack((arr,delta*delta_rate)),delimiter=" ",fmt="%.5f")
+# 	return out_file,delta_num
+
+def get_f0_delta(in_file,map_file,out_dir,delta_rate):
+	#delta and delta-delta feature for the mean of previous, current and next syllable f0 data
+	file_name = in_file.split("/")[-1]
+	delta_num = -1
+	out_file = out_dir+"/"+file_name+"_delta"
+	with open(map_file) as mapf:
+		map_lines = mapf.readlines()
+		data = np.loadtxt(in_file,delimiter=" ")
+		delta_num = 2*data.shape[1]
+		assert len(map_lines)==len(data)
+		delta_arr = np.zeros((len(map_lines),delta_num))
+		for i in range(len(map_lines)):
+			pre_data_name = "" if i==0 else map_lines[i-1].split(" ")[0]
+			data_name = map_lines[i].split(" ")[0]
+			next_data_name = "" if i==len(map_lines)-1 else map_lines[i+1].split(" ")[0]
+
+			if data_name == pre_data_name:
+				delta_arr[i][0:data.shape[1]] = data[i]-data[i-1]
+			if data_name == next_data_name:
+				delta_arr[i][data.shape[1]:] = data[i+1]-data[i]-delta_arr[i][0:data.shape[1]]
+		np.savetxt(out_file,np.hstack((data,delta_arr*delta_rate)),delimiter=" ",fmt="%.5f")
+	return out_file,delta_num
+
+def get_mean_delta(in_file,map_file,out_dir,delta_rate):
+	#delta and delta-delta feature for the mean of previous, current and next syllable f0 data
+	file_name = in_file.split("/")[-1]
+	delta_num = 3
+	out_file = out_dir+"/"+file_name+"_delta"
+	with open(map_file) as mapf:
+		map_lines = mapf.readlines()
+		data = np.loadtxt(in_file,delimiter=" ")
+		assert len(map_lines)==len(data)
+		delta_arr = np.zeros((len(map_lines),delta_num))
+		for i in range(len(map_lines)):
+			pre_data_name = "" if i==0 else map_lines[i-1].split(" ")[0]
+			data_name = map_lines[i].split(" ")[0]
+			next_data_name = "" if i==len(map_lines)-1 else map_lines[i+1].split(" ")[0]
+
+			if data_name == pre_data_name:
+				delta_arr[i][0] = data[i].mean()-data[i-1].mean()
+			if data_name == next_data_name:
+				delta_arr[i][1] = data[i+1].mean()-data[i].mean()
+			delta_arr[i][2] = delta_arr[i][1]-delta_arr[i][0]
+		np.savetxt(out_file,np.hstack((data,delta_arr*delta_rate)),delimiter=" ",fmt="%.5f")
+	return out_file,delta_num
+
+def get_dct_delta(in_file,map_file,out_dir,delta_rate):
+	#delta and delta-delta feature for the first coefficient of syllable dct
+	file_name = in_file.split("/")[-1]
+	delta_num = 3
+	out_file = out_dir+"/"+file_name+"_delta"
+	with open(map_file) as mapf:
+		map_lines = mapf.readlines()
+		data = np.loadtxt(in_file,delimiter=" ")
+		assert len(map_lines)==len(data)
+		delta_arr = np.zeros((len(map_lines),delta_num))
+		for i in range(len(map_lines)):
+			pre_data_name = "" if i==0 else map_lines[i-1].split(" ")[0]
+			data_name = map_lines[i].split(" ")[0]
+			next_data_name = "" if i==len(map_lines)-1 else map_lines[i+1].split(" ")[0]
+
+			if data_name == pre_data_name:
+				delta_arr[i][0] = data[i][0]-data[i-1][0]
+			if data_name == next_data_name:
+				delta_arr[i][1] = data[i+1][0]-data[i][0]
+			delta_arr[i][2] = delta_arr[i][1]-delta_arr[i][0]
+		np.savetxt(out_file,np.hstack((data,delta_arr*delta_rate)),delimiter=" ",fmt="%.5f")
+	return out_file,delta_num
+def get_self_delta(in_file,out_dir,delta_rate):
+	file_name = in_file.split("/")[-1]
+	out_file = out_dir+"/"+file_name+"_delta"
+	data = np.loadtxt(in_file,delimiter=" ")
+	delta_num = data.shape[1]-1
+	delta = data[:,1:]-data[:,0:-1]
+	np.savetxt(out_file,np.hstack((data,delta*delta_rate)),delimiter=" ",fmt="%.5f")
+	return out_file,delta_num
+
+def get_mean_std_delta(in_file,map_file,out_dir,delta_rate):
+	#delta and delta-delta feature for the first coefficient of syllable dct
+	file_name = in_file.split("/")[-1]
+	delta_num = 3
+	out_file = out_dir+"/"+file_name+"_msdelta"
+	with open(map_file) as mapf:
+		map_lines = mapf.readlines()
+		data = np.loadtxt(in_file,delimiter=" ")
+		assert len(map_lines)==len(data)
+		delta_arr = np.zeros((len(map_lines),delta_num,2))
+		for i in range(len(map_lines)):
+			pre_data_name = "" if i==0 else map_lines[i-1].split(" ")[0]
+			data_name = map_lines[i].split(" ")[0]
+			next_data_name = "" if i==len(map_lines)-1 else map_lines[i+1].split(" ")[0]
+
+			if data_name == pre_data_name:
+				delta_arr[i][0] = data[i]-data[i-1]
+			if data_name == next_data_name:
+				delta_arr[i][1] = data[i+1]-data[i]
+			delta_arr[i][2] = delta_arr[i][1]-delta_arr[i][0]
+		delta_arr = delta_arr.reshape((len(map_lines),delta_num*2))
+		np.savetxt(out_file,np.hstack((data,delta_arr*delta_rate)),delimiter=" ",fmt="%.5f")
+	return out_file,delta_num*2
+
+def get_small_data(file_list,ratio,out_dir):
+	out_file_list = []
+	for file in file_list:
+		file_name = file.split("/")[-1]
+		out_file = out_dir+"/"+file_name+"_small"
+		with open(file) as f:
+			lines = f.readlines()
+			with open(out_file,"w+") as outf:
+				outf.writelines(lines[0:int(ratio*len(lines))])
+		out_file_list.append(out_file)
+	return out_file_list
+
+def timeline_statistics(predict_f0,true_f0):
+	os.system("python ../decision_tree/wagon/data_processing.py"+
+		" --mode timeline_predict_statistics"+
+		" --true_f0_dir "+true_f0+
+		" --predict_f0_dir "+predict_f0)
+
+def idct_phrase(phrase_syllable_dir,dct_dir,out_dir):
+	out_dir += "/idct_phrase_f0"
+	os.system("mkdir "+out_dir)
+	os.system("python ../decision_tree/data_preprocessing.py"+
+		" --mode idct_phrase_f0_dir"+
+		" --phrase_syl_dir "+phrase_syllable_dir+
+		" --dct_dir "+dct_dir+
+		" --out_dir "+out_dir)
+	return out_dir
+
+def map_f0(f0_dir,map_file,out_file):
+	os.system("python ../decision_tree/data_preprocessing.py"+
+		" --mode map_to_new_f0_vector"+
+		" --map_file "+map_file+
+		" --f0_dir "+f0_dir+
+		" --out_file "+out_file+
+		" --add_index_prefix 0")
+
+def vector_utt_stat(predict_file,true_file,syl_map):
+	dic = {}
+	predict = np.loadtxt(predict_file,delimiter=" ")
+	predict = predict.reshape((predict.shape[0],-1))
+	true = np.loadtxt(true_file,delimiter=" ")
+	true = true.reshape((true.shape[0],-1))
+
+	smap = []
+	with open(syl_map) as f:
+		smap = f.readlines()
+	assert len(smap)==len(predict)
+	assert len(predict)==len(true)
+	for i in range(len(smap)):
+		data_name = smap[i].strip().split(" ")[0]
+		if data_name not in dic:
+			dic[data_name] = [[],[]]
+		dic[data_name][0].append(true[i])
+		dic[data_name][1].append(predict[i])
+
+	stat = []
+	for data_name,f0 in dic.items():
+		tmp_true = np.hstack(f0[0])
+		tmp_predict = np.hstack(f0[1])
+		rmse = np.sqrt(np.square(tmp_true-tmp_predict).mean())
+		cor = np.corrcoef(tmp_true,tmp_predict)[0][1]
+		stat.append([rmse,cor])
+	stat = np.array(stat).mean(axis=0)
+	print("rmse: "+str(stat[0]))
+	print("cor: "+str(stat[1]))
+	return
+
+def vector_syl_stat(predict_file,true_file):
+	predict = np.loadtxt(predict_file,delimiter=" ")
+	true = np.loadtxt(true_file,delimiter=" ")
+	print("rmse: "+str(np.sqrt(np.square(true-predict).mean(axis=1)).mean()))
+	cor = np.zeros((len(predict),))
+
+	bias = np.zeros((predict.shape[1],))
+	bias[0] += 0.00000001
+
+	for row in range(len(predict)):
+		try:
+			cor[row] = np.corrcoef(predict[row]+bias,true[row]+bias)[0][1]
+		except Warning:
+			pass
+	print("cor: "+str(cor.mean()))
+
+
+def mean_std_syl_stat(predict_mean_std,true_mean_std):
+	predict = np.loadtxt(predict_mean_std,delimiter=" ")
+	true = np.loadtxt(true_mean_std,delimiter=" ")
+	print("mean rmse: "+str(np.abs(predict[:,0]-true[:,0]).mean()))
+	print("std rmse: "+str(np.abs(predict[:,1]-true[:,1]).mean()))
+
+def mean_std_utt_stat(predict_mean_std,true_mean_std,syl_map):
+	dic = {}
+	predict = np.loadtxt(predict_mean_std,delimiter=" ")
+	true = np.loadtxt(true_mean_std,delimiter=" ")
+
+	print("mean:")
+	tmp_true = "_my_true"
+	np.savetxt(tmp_true,true[:,0].reshape(true.shape[0],1))
+	tmp_predict = "_my_predict"
+	np.savetxt(tmp_predict,predict[:,0].reshape(predict.shape[0],1))
+	vector_utt_stat(tmp_predict,tmp_true,syl_map)
+	print("----------------------------------------")
+	print("std:")
+	tmp_true = "_my_true"
+	np.savetxt(tmp_true,true[:,1].reshape(true.shape[0],1))
+	tmp_predict = "_my_predict"
+	np.savetxt(tmp_predict,predict[:,1].reshape(predict.shape[0],1))
+	vector_utt_stat(tmp_predict,tmp_true,syl_map)
+
+	os.system("rm "+tmp_true)
+	os.system("rm "+tmp_predict)
+
+	return
+
+
 if __name__=="__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--mode',dest='mode')
@@ -216,6 +474,7 @@ if __name__=="__main__":
 	parser.add_argument('--val_feat_desc',dest='val_feat_desc')
 	parser.add_argument('--true_f0_dir',dest='true_f0_dir')
 	parser.add_argument('--ccoef_dir',dest='ccoef_dir')
+	parser.add_argument('--data_dir',dest='data_dir')
 	args = parser.parse_args()
 	
 	mode = args.mode
@@ -249,19 +508,48 @@ if __name__=="__main__":
 			" --train_label"+
 			" --dev_data"+
 			" --dev_label"+
+			" --data_dir"+
 			" --out_dir")
-	if mode=="run":
-		voice_dir = args.voice_dir
-		out_dir = args.out_dir
-		op_file = args.op_file
-		train_data = args.train_data
-		train_label = args.train_label
-		dev_data = args.dev_data
-		dev_label = args.dev_label
-		train_syllable_map = args.train_syllable_map
-		dev_syllable_map = args.dev_syllable_map
-		true_f0_dir = args.true_f0_dir
-		ccoef_dir = args.ccoef_dir
+
+		print("python run.py --mode simple_run"+
+			" --voice_dir"+
+			" --decompose_desc"+
+			" --operation_file"+
+			" --data_dir"+
+			" --out_dir")
+	if mode=="run" or mode=="simple_run":
+		if mode=="run":
+			voice_dir = args.voice_dir
+			out_dir = args.out_dir
+			op_file = args.op_file
+			train_data = args.train_data
+			train_label = args.train_label
+			dev_data = args.dev_data
+			dev_label = args.dev_label
+			train_syllable_map = args.train_syllable_map
+			dev_syllable_map = args.dev_syllable_map
+			true_f0_dir = args.true_f0_dir
+			ccoef_dir = args.ccoef_dir
+			vector_feat_desc = args.vector_feat_desc
+			val_feat_desc = args.val_feat_desc
+			decompose_desc = args.decompose_desc
+		elif mode=="simple_run":
+			voice_dir = args.voice_dir
+			out_dir = args.out_dir
+			op_file = args.op_file
+			data_dir = args.data_dir
+			decompose_desc = args.decompose_desc
+			train_data = data_dir+"/train_test_data/train_data/train_feat"
+			train_label = data_dir+"/train_test_data/train_data/train_f0"
+			dev_data = data_dir+"/train_test_data/test_data/test_feat"
+			dev_label = data_dir+"/train_test_data/test_data/test_f0"
+			train_syllable_map = data_dir+"/train_test_data/train_data/train_syllable_map"
+			dev_syllable_map = data_dir+"/train_test_data/test_data/test_syllable_map"
+			true_f0_dir = data_dir+"/f0_value"
+			ccoef_dir = voice_dir+"/ccoefs"
+			vector_feat_desc = data_dir+"/new_feature_desc_vector"
+			val_feat_desc = data_dir+"/new_feature_desc_val"
+
 		os.system("mkdir "+out_dir)
 		os.system("cp "+op_file+" "+out_dir)
 
@@ -276,11 +564,34 @@ if __name__=="__main__":
 
 		op = read_operation(op_file)
 
+		for key,val in op.items():
+			print(key+" "+str(val))
+
+		######################################################################
+		if op["small_data"] == 1:
+			print(">>>>>>>>>> create small dataset <<<<<<<<<<")
+			train_data,train_label,train_syllable_map = get_small_data([train_data,train_label,train_syllable_map],0.01,out_dir)
+		if op["predict"]=="phrase":
+			train_data = data_dir+"/phrase_dir/phrase_f0_res_train_test/train_data/train_feat"
+			train_label = data_dir+"/phrase_dir/phrase_f0_res_train_test/train_data/train_f0"
+			dev_data = data_dir+"/phrase_dir/phrase_f0_res_train_test/test_data/test_feat"
+			dev_label = data_dir+"/phrase_dir/phrase_f0_res_train_test/test_data/test_f0"
+		######################################################################
+
 		train_mean_std = row_mean_std(train_label,out_dir)
 		dev_mean_std = row_mean_std(dev_label,out_dir)
 
 		train_out = train_label
 		dev_out = dev_label
+
+
+		######################################################################
+		if op["log"] == 1:
+			print("")
+			print(">>>>>>>>>> calculate logarithm for the data <<<<<<<<<<")
+			train_out = log_row(train_out,out_dir)
+			dev_out = log_row(dev_out,out_dir)
+		######################################################################
 
 		######################################################################
 		pad_num = 10
@@ -308,13 +619,41 @@ if __name__=="__main__":
 
 
 		######################################################################
-		if op["dct"] == 1:
+		if op["dct"] >= 0:
 			print("")
 			print(">>>>>>>>>> dct row <<<<<<<<<<")
-			train_out = dct_row(train_out,out_dir)
-			dev_out = dct_row(dev_out,out_dir)
-		elif op["dct"] == 0:
+			train_out = dct_row(train_out,out_dir,int(op["dct"]))
+			dev_out = dct_row(dev_out,out_dir,int(op["dct"]))
+		elif op["dct"] == -1:
 			# print(">>>>>>>>>> no dct <<<<<<<<<<")
+			pass
+		######################################################################
+
+
+		######################################################################
+		delta_num = 0
+		delta_rate = op["delta_rate"]
+		if op["delta"]=="mean":
+			print("")
+			print(">>>>>>>>>> calculate mean delta feature <<<<<<<<<<")
+			train_out,delta_num = get_mean_delta(train_out,train_syllable_map,out_dir,delta_rate)
+			dev_out,delta_num = get_mean_delta(dev_out,dev_syllable_map,out_dir,delta_rate)
+		elif op["delta"]=="dct":
+			print("")
+			print(">>>>>>>>>> calculate dct delta feature <<<<<<<<<<")
+			train_out,delta_num = get_dct_delta(train_out,train_syllable_map,out_dir,delta_rate)
+			dev_out,delta_num = get_dct_delta(dev_out,dev_syllable_map,out_dir,delta_rate)
+		elif op["delta"]=="f0":
+			print("")
+			print(">>>>>>>>>> calculate adjacent f0 delta feature <<<<<<<<<<")
+			train_out,delta_num = get_f0_delta(train_out,train_syllable_map,out_dir,delta_rate)
+			dev_out,delta_num = get_f0_delta(dev_out,dev_syllable_map,out_dir,delta_rate)
+		elif op["delta"]=="self_delta":
+			print("")
+			print(">>>>>>>>>> calculate self delta feature <<<<<<<<<<")
+			train_out,delta_num = get_self_delta(train_out,out_dir,delta_rate)
+			dev_out,delta_num = get_self_delta(dev_out,out_dir,delta_rate)
+		elif op["delta"]=="none":
 			pass
 		######################################################################
 
@@ -333,36 +672,76 @@ if __name__=="__main__":
 
 
 		######################################################################
-		vector_feat_desc = args.vector_feat_desc
-		val_feat_desc = args.val_feat_desc
 		if op["predict"] == "vector":
 			print("")
 			print(">>>>>>>>>> predict f0 value vector <<<<<<<<<<")
 			os.system("mkdir "+out_dir+"/predict_f0_vector")
-			predict_f0 = predict_vector(train_data,train_out,dev_data,dev_out,out_dir+"/predict_f0_vector",vector_feat_desc)
+			predict_f0 = predict_vector(train_data,train_out,dev_data,dev_out,out_dir+"/predict_f0_vector",vector_feat_desc,stop_size=30)
+
 		elif op["predict"]=="multiple_vector":
 			print("")
 			print(">>>>>>>>>> decompose and predict multiple f0 value vector <<<<<<<<<<")
 			os.system("mkdir "+out_dir+"/predict_f0_vector")
-			decompose_desc = args.decompose_desc
 			predict_f0 = predict_multiple_vector(train_data,train_out,dev_data,dev_out,out_dir+"/predict_f0_vector",decompose_desc,vector_feat_desc,val_feat_desc)
+		
 		elif op["predict"] == "each_val":
 			print("")
 			print(">>>>>>>>>> predict f0 value individually <<<<<<<<<<")
 			os.system("mkdir "+out_dir+"/predict_f0_val")
 			predict_f0 = predict_each_f0_value(train_data,train_out,dev_data,dev_out,out_dir+"/predict_f0_val",val_feat_desc)
+		
 		elif op["predict"] == "tone_specific_vector":
 			print("")
 			print(">>>>>>>>>> predict tone specific f0 value <<<<<<<<<<")
 			os.system("mkdir "+out_dir+"/predict_f0_vector")
-			predict_f0 = predict_tone_specific(train_data,train_out,train_syllable_map,dev_data,dev_out,\
-				dev_syllable_map,out_dir+"/predict_f0_vector",vector_feat_desc,vector_prediction=True)
+			predict_f0 = predict_tone_specific(train_data,train_out,train_syllable_map,dev_data,dev_out,
+				dev_syllable_map,out_dir+"/predict_f0_vector",vector_feat_desc,
+				vector_prediction=True,tone_num = int(op["tone_num"]),stop_size=20)
+		
 		elif op["predict"] == "tone_specific_each_val":
 			print("")
 			print(">>>>>>>>>> predict tone specific f0 value <<<<<<<<<<")
 			os.system("mkdir "+out_dir+"/predict_f0_val")
 			predict_f0 = predict_tone_specific(train_data,train_out,train_syllable_map,dev_data,dev_out,\
 				dev_syllable_map,out_dir+"/predict_f0_val",val_feat_desc,vector_prediction=False)
+		
+		elif op["predict"]=="phrase":
+			print("")
+			print(">>>>>>>>>> predict phrase dct coefficient <<<<<<<<<<")
+			os.system("mkdir "+out_dir+"/phrase_prediction")
+			tmp_train_data = data_dir+"/phrase_dir/phrase_f0_train_test/train_data/train_feat"
+			tmp_train_label = data_dir+"/phrase_dir/phrase_f0_train_test/train_data/train_f0"
+			tmp_test_data = data_dir+"/phrase_dir/phrase_f0_train_test/test_data/test_feat"
+			tmp_test_label = data_dir+"/phrase_dir/phrase_f0_train_test/test_data/test_f0"
+			tmp_vector_desc = data_dir+"/phrase_dir/feature_desc_vector"
+			tmp_test_map = data_dir+"/phrase_dir/phrase_f0_train_test/test_data/test_syllable_map"
+			tmp_phrase_syl = data_dir+"/phrase_dir/phrase_syllable"
+			phrase_predict = predict_vector(tmp_train_data,tmp_train_label,tmp_test_data,tmp_test_label,out_dir+"/phrase_prediction",tmp_vector_desc,stop_size=10)
+			phrase_dct_dir = put_predict_f0_in_file(phrase_predict,tmp_test_map,out_dir+"/phrase_prediction",first_syllable_flag=0)
+			idct_phrase_dir = idct_phrase(tmp_phrase_syl,phrase_dct_dir,out_dir+"/phrase_prediction")
+			predict_phrase_level_f0 = out_dir+"/phrase_prediction/predict_phrase_level_f0"
+			map_f0(idct_phrase_dir,dev_syllable_map,predict_phrase_level_f0)
+
+			print("")
+			print(">>>>>>>>>> predict phrase residual f0 value <<<<<<<<<<")
+			os.system("mkdir "+out_dir+"/phrase_res_prediction")
+			predict_f0 = predict_vector(train_data,train_out,dev_data,dev_out,out_dir+"/phrase_res_prediction",vector_feat_desc,stop_size=30)
+			# exit()
+		
+		elif op["predict"]=="rf_vector":
+			print(">>>>>>>>>> random forest prediction <<<<<<<<<<")
+			os.system("mkdir "+out_dir+"/rf_dump")
+			rf = RandomForest(20,0.7,0.7,train_out,train_data,dev_out,dev_data,vector_feat_desc,out_dir+"/rf_dump",stop_size=30)
+			predict_f0 = rf.train()
+
+		elif op["predict"] == "rf_tone_specific_vector":
+			print("")
+			print(">>>>>>>>>> predict tone specific f0 value using random forest<<<<<<<<<<")
+			os.system("mkdir "+out_dir+"/predict_f0_vector")
+			predict_f0 = predict_tone_specific(train_data,train_out,train_syllable_map,dev_data,dev_out,\
+				dev_syllable_map,out_dir+"/predict_f0_vector",vector_feat_desc,
+				vector_prediction=True,tone_num = int(op["tone_num"]),rf_param=[20,0.7,0.7],stop_size=20)
+
 		elif op["predict"] == "none":
 			print("")
 			print(">>>>>>>>>> true f0 value <<<<<<<<<<")
@@ -372,13 +751,62 @@ if __name__=="__main__":
 
 		######################################################################
 		predict_mean_std = None
-		if op["predict_mean_std"] == 1:
+		if op["predict_mean_std"] == "vector":
+
+			# if op["delta"]!="none":
+			# 	print(">>>>>>>>>> calculate delta for mean and standard deviation <<<<<<<<<<")
+			# 	train_mean_std,msdelta_num = get_mean_std_delta(train_mean_std,train_syllable_map,out_dir,1)
+			# 	dev_mean_std,msdelta_num = get_mean_std_delta(dev_mean_std,dev_syllable_map,out_dir,1)
+
 			print("")
 			print(">>>>>>>>>> predict f0 mean and standard deviation <<<<<<<<<<")
 			os.system("mkdir "+out_dir+"/predict_mean_std")
 			predict_mean_std = predict_vector(train_data,train_mean_std,dev_data,dev_mean_std,out_dir+"/predict_mean_std",vector_feat_desc)
-		elif op["predict_mean_std"] == 0:
+
+			# if op["delta"]!="none":
+			# 	np.savetxt(predict_mean_std+"_msdeldel",np.loadtxt(predict_mean_std,delimiter=" ")[:,0:-msdelta_num],delimiter=" ")
+			# 	predict_mean_std = predict_mean_std+"_msdeldel"
+
+		elif op["predict_mean_std"] == "tone_specific_vector":
+
+			print("")
+			print(">>>>>>>>>> predict f0 mean and standard deviation(tone dependent)<<<<<<<<<<")
+			os.system("mkdir "+out_dir+"/predict_mean_std")
+			predict_mean_std = predict_tone_specific(train_data,train_mean_std,train_syllable_map,dev_data,dev_mean_std,
+				dev_syllable_map,out_dir+"/predict_mean_std",vector_feat_desc,
+				vector_prediction=True,tone_num = int(op["tone_num"]),stop_size=20)
+
+		elif op["predict_mean_std"] == "rf_vector":
+			print("")
+			print(">>>>>>>>>> predict f0 mean and standard deviation <<<<<<<<<<")
+			os.system("mkdir "+out_dir+"/predict_mean_std")
+			os.system("mkdir "+out_dir+"/predict_mean_std/rf_dump_mean_std")
+			rf = RandomForest(20,1,0.7,train_mean_std,train_data,dev_mean_std,dev_data,
+				vector_feat_desc,out_dir+"/predict_mean_std/rf_dump_mean_std",stop_size=30)
+			predict_mean_std = rf.train()
+
+		elif op["predict_mean_std"] == "rf_tone_specific_vector":
+			print("")
+			print(">>>>>>>>>> predict f0 mean and standard deviation(tone dependent random forest)<<<<<<<<<<")
+			os.system("mkdir "+out_dir+"/predict_mean_std")
+			os.system("mkdir "+out_dir+"/predict_mean_std/rf_dump_mean_std")
+			predict_mean_std = predict_tone_specific(train_data,train_mean_std,train_syllable_map,dev_data,dev_mean_std,
+				dev_syllable_map,out_dir+"/predict_mean_std/rf_dump_mean_std",vector_feat_desc,
+				vector_prediction=True,tone_num = int(op["tone_num"]),rf_param=[20,1,0.7],stop_size=20)
+			
+		elif op["predict_mean_std"] == "none":
 			pass
+
+		if op["predict_mean_std"]!="none":
+			print(">>>>>>>>>> shape syllable level statistics <<<<<<<<<<")
+			vector_syl_stat(predict_f0,dev_out)
+			print(">>>>>>>>>> shape utterance level statistics <<<<<<<<<<")
+			vector_utt_stat(predict_f0,dev_out,dev_syllable_map)
+
+			print(">>>>>>>>>> mean std syllable level statistics <<<<<<<<<<")
+			mean_std_syl_stat(predict_mean_std,dev_mean_std)
+			print(">>>>>>>>>> mean std utterance level statistics <<<<<<<<<<")
+			mean_std_utt_stat(predict_mean_std,dev_mean_std,dev_syllable_map)
 		######################################################################
 
 
@@ -392,13 +820,23 @@ if __name__=="__main__":
 			pass
 		######################################################################
 
+		######################################################################
+		if op["delta"] != "none":
+			print("")
+			print(">>>>>>>>>> delete delta <<<<<<<<<<")
+			np.savetxt(predict_f0+"_deldel",np.loadtxt(predict_f0)[:,0:-delta_num])
+			predict_f0 = predict_f0+"_deldel"
+		else:
+			pass
+		######################################################################
+
 
 		######################################################################
-		if op["idct"] == 1:
+		if op["idct"] >= 0:
 			print("")
 			print(">>>>>>>>>> idct <<<<<<<<<<")
-			predict_f0 = idct_row(predict_f0,out_dir)
-		elif op["idct"] == 0:
+			predict_f0 = idct_row(predict_f0,out_dir,int(op["idct"]))
+		elif op["idct"] == -1:
 			# print(">>>>>>>>>> no idct <<<<<<<<<<")
 			pass
 		######################################################################
@@ -436,11 +874,37 @@ if __name__=="__main__":
 		######################################################################
 
 		######################################################################
+		if op["log"] == 1:
+			print("")
+			print(">>>>>>>>>> calculate exponential for the data <<<<<<<<<<")
+			predict_f0 = exp_row(predict_f0,out_dir)
+		######################################################################
+
+		######################################################################
+		if op["predict"]=="phrase":
+			np.savetxt(out_dir+"/predict_f0",np.loadtxt(predict_f0,delimiter=" ")+np.loadtxt(predict_phrase_level_f0,delimiter=" "),delimiter=" ",fmt="%.5f")
+			predict_f0 = out_dir+"/predict_f0"
+			train_data = data_dir+"/train_test_data/train_data/train_feat"
+			train_label = data_dir+"/train_test_data/train_data/train_f0"
+			dev_data = data_dir+"/train_test_data/test_data/test_feat"
+			dev_label = data_dir+"/train_test_data/test_data/test_f0"
+		######################################################################
+
+
+
+		print("final prediction for test data: "+predict_f0)
+
+
+
+		######################################################################
 		if op["test_stat"] == 1:
 			print("")
-			print(">>>>>>>>>> test statistics <<<<<<<<<<")
-			test_statistics(predict_f0,dev_label,out_dir)
-			os.system("cat "+out_dir+"/"+"test_statistics")
+			print(">>>>>>>>>> syllable level test statistics <<<<<<<<<<")
+			vector_syl_stat(predict_f0,dev_label)
+			# test_statistics(predict_f0,dev_label,out_dir)
+			# os.system("cat "+out_dir+"/"+"test_statistics")
+			print(">>>>>>>>>> utterance level test statistics no duration <<<<<<<<<<")
+			vector_utt_stat(predict_f0,dev_label,dev_syllable_map)
 		elif op["test_stat"] == 0:
 			# print(">>>>>>>>>> no test statistics <<<<<<<<<<")
 			pass
@@ -461,11 +925,29 @@ if __name__=="__main__":
 			predict_f0 = generate_f0_time_line(predict_f0,out_dir,true_f0_dir)
 		elif op["predict_duration"] == 1:
 			print(">>>>>>>>>> apply f0 in festival prediction <<<<<<<<<<")
-			os.system("python ./apply_f0.py "+voice_dir+" "+out_dir+"/wdy_tmp")
+			os.system("python ./apply_f0.py"+
+				" --mode run"+
+				" --voice_dir "+voice_dir+
+				" --out_dir "+out_dir+"/wdy_tmp"+
+				" --modified_clustergen_scm ./experiment/clustergen.scm"+
+				" --test_txt "+voice_dir+"/etc/txt.done.data.test")
 			ccoef_dir = out_dir+"/wdy_tmp/ccoefs"
 			f0_tag_dir = out_dir+"/wdy_tmp/f0_value"
 			predict_f0 = generate_f0_time_line(predict_f0,out_dir,f0_tag_dir)
 		######################################################################
+
+		######################################################################
+		print("")
+		print(">>>>>>>>>> predict statistics for f0 timeline with duration <<<<<<<<<<")
+		print(">>>>>>>>>> put subsample f0 in files and generate timeline")
+		os.system("mkdir "+out_dir+"/subsample_in_file")
+		sub_f0_dir = put_predict_f0_in_file(dev_label,dev_syllable_map,out_dir+"/subsample_in_file")
+		sub_f0_dir = generate_f0_time_line(sub_f0_dir,out_dir+"/subsample_in_file",true_f0_dir)
+		print(">>>>>>>>>> calculate statistics...")
+		predict_f0 = timeline_statistics(predict_f0,sub_f0_dir)
+		######################################################################
+
+
 
 
 		######################################################################
